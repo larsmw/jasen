@@ -56,7 +56,7 @@ class Logger {
     private function log($errorlevel, $value = '', $tag) {
 
         $datetime = date("Y-m-d H:i:s");
-        if (!file_exists(self::LOGFILENAME)) {
+        if (!file_exists("../logs/app.log")) {
             $headers = self::HEADERS . "\n";
         }
 
