@@ -21,4 +21,5 @@ else { // child
         echo "sid : $sid\n";
         echo "$i...\n";
     }
+    echo "$sid : done\n";
 }
