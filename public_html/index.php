@@ -1,6 +1,10 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', TRUE);
+
+/**
+ * This is a search engine...
+ * 
+ * @author Lars Nielsen <lars@lfweb.dk>
+ */
 
 /**
 Routing ideas
@@ -15,21 +19,65 @@ Routing ideas
   /crawler/control/start
 **/
 
+ini_set('display_errors', 'TRUE');
+ini_set('html_errors', 'TRUE');
+//xdebug_enable();
+//xdebug_start_code_coverage();
 
-$pid = pcntl_fork(); // fork
-    if ($pid < 0)
-        exit;
-    else if ($pid) // parent
-        exit;
-    else { // child
-   
-        $sid = posix_setsid();
-       
-        if ($sid < 0)
-            exit;
-           
-        for($i = 0; $i <= 60; $i++) { // do something for 5 minutes
-            sleep(5);
-	    echo "$i...\n";
+header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
+
+define("ROOT", getcwd());
+
+require_once 'includes/base.php';
+
+/**
+ * Handle errors properly
+ */
+class UnknownException extends Exception {
+    
+}
+
+
+
+
+/**
+ * Test class to prove we are right.
+ */
+class test extends Application {
+
+    /**
+     * Call constructor of parent.
+     */
+    public function __construct() {
+        parent::__construct();
+//        throw new UnknownException();
+        if(isset($_GET['q'])){
+            $cmd = $_GET['q'];
         }
+        else {
+            $cmd = "";
+        }
+        if($cmd === "crawl") {
+            $Timer = 10; //seconds
+            echo "this text is from simple.php";
+            echo "Crawling... " . microtime();
+            die();
+        }
+	echo $this->parse();
     }
+
+    private function parse() {
+      $template = file_get_contents("templates/index.html");
+      $template = str_replace("{%region:mainmenu}", $this->menu(), $template);
+      return $template;
+    }
+
+    public function menu() {
+	parent::showMenu(0);
+    }
+
+}
+
+$t = new test();
+?>
