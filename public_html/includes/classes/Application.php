@@ -74,6 +74,11 @@ class Application extends Base {
 
       echo "<nav>".$this->buildMenu(0, $menu)."</nav>";
     }
+    
+    public function __destruct() {
+        parent::$log->info("Peak mem : ".(memory_get_peak_usage(TRUE)/1024)."kb");
+        parent::__destruct();
+    }
 }
 
 ?>
