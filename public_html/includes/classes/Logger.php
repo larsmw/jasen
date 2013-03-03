@@ -56,11 +56,11 @@ class Logger {
     private function log($errorlevel, $value = '', $tag) {
 
         $datetime = date("Y-m-d H:i:s");
-        if (!file_exists($this->LOGFILENAME)) {
-            $headers = $this->HEADERS . "\n";
+        if (!file_exists($self::LOGFILENAME)) {
+            $headers = $self::HEADERS . "\n";
         }
 
-        $fd = fopen($this->LOGFILENAME, "a");
+        $fd = fopen($self::LOGFILENAME, "a");
 
         if (@$headers) {
             fwrite($fd, $headers);
@@ -72,7 +72,7 @@ class Logger {
 
         $entry = array($datetime, $errorlevel, $tag, $value, $line, $file);
 
-        fputcsv($fd, $entry, $this->SEPARATOR);
+        fputcsv($fd, $entry, $self::SEPARATOR);
 
         fclose($fd);
     }
