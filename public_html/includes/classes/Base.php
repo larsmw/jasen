@@ -18,7 +18,7 @@ class Base {
     
     public function __construct() {
         $this->log = new Logger(ROOT.'/../logs/app.log');
-        $this->log->info("Base is starting.");
+        $this->log->debug("Base is starting.");
     }
     
     public function __destruct() {
