@@ -15,7 +15,7 @@ class Logger {
     // Name of the file where the message logs will be appended.
     private $LOGFILENAME;
     // Define the separator for the fields. Default is comma (,).
-    private $SEPARATOR;
+    private $SEPARATOR=",";
     // headers
     private $HEADERS;
 
