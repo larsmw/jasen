@@ -14,10 +14,11 @@ require_once ROOT.'/includes/classes/Logger.php';
  */
 class Base {   
     //put your code here
-    public static $log;
+//    public static $log;
     
     public function __construct() {
-        $this->log = new Logger(ROOT.'/../logs/app.log');
+        //$this->log = new Logger(ROOT.'/../logs/app.log');
+        Logger::info("wooot...");
 //        $this->log->debug("Base is starting.");
     }
     

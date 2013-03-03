@@ -83,7 +83,7 @@ class Logger {
         }
     }
     // Function to write not technical INFOrmation messages that will be written into $LOGFILENAME.
-    function info($value = '', $tag = self::DEFAULT_TAG) {
+    public static function info($value = '', $tag = self::DEFAULT_TAG) {
         
         self::log($this->log_levels['info'], $value, $tag);
     }
@@ -91,21 +91,21 @@ class Logger {
     // Function to write WARNING messages that will be written into $LOGFILENAME.
     // These messages are non-fatal errors, so, the script will work properly even
     // if WARNING errors appears, but this is a thing that you must ponderate about.
-    function warning($value = '', $tag = self::DEFAULT_TAG) {
+    public static function warning($value = '', $tag = self::DEFAULT_TAG) {
 
         self::log($this->log_levels['warn'], $value, $tag);
     }
 
     // Function to write ERROR messages that will be written into $LOGFILENAME.
     // These messages are fatal errors. Your script will NOT work properly if an ERROR happens, right?
-    function error($value = '', $tag = self::DEFAULT_TAG) {
+    public static function error($value = '', $tag = self::DEFAULT_TAG) {
 
         self::log($this->log_levels['error'], $value, $tag);
     }
 
     // Function to write DEBUG messages that will be written into $LOGFILENAME.
     // DEBUG messages are highly technical issues, like an SQL query or result of it.
-    function debug($value = '', $tag = self::DEFAULT_TAG) {
+    public static function debug($value = '', $tag = self::DEFAULT_TAG) {
 
         self::log($this->log_levels['debug'], $value, $tag);
     }
