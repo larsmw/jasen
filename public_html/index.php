@@ -19,8 +19,9 @@ Routing ideas
   /crawler/control/start
 **/
 
-ini_set('display_errors', 'TRUE');
-ini_set('html_errors', 'TRUE');
+ini_set('display_errors', 'FALSE');
+ini_set('html_errors', 'FALSE');
+ini_set('log_errors', 'TRUE');
 //xdebug_enable();
 //xdebug_start_code_coverage();
 

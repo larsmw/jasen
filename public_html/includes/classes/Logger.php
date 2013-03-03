@@ -60,7 +60,7 @@ class Logger {
             $headers = self::HEADERS . "\n";
         }
 
-        $fd = fopen(self::LOGFILENAME, "a");
+        $fd = fopen("../logs/app.log", "a");
 
         if (@$headers) {
             fwrite($fd, $headers);
