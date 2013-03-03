@@ -85,7 +85,7 @@ class Logger {
     // Function to write not technical INFOrmation messages that will be written into $LOGFILENAME.
     public static function info($value = '', $tag = self::DEFAULT_TAG) {
         
-        self::log($this->log_levels['info'], $value, $tag);
+        self::log('info', $value, $tag);
     }
 
     // Function to write WARNING messages that will be written into $LOGFILENAME.
