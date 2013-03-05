@@ -66,6 +66,11 @@ class test extends Application {
             echo "Crawling... " . microtime();
             die();
         }
+        if($cmd === "logout") {
+            session_start();
+            session_destroy();
+            header("location:index.php");
+        }
         $this->checkFormData();
         echo $this->parse();
     }
