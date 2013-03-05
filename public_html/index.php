@@ -97,17 +97,17 @@ class test extends Application {
 
 // Mysql_num_row is counting table row
             $count = mysql_num_rows($result);
-        }
 // If result matched $myusername and $mypassword, table row must be 1 row
 
-        if ($count == 1) {
+            if ($count == 1) {
 
 // Register $myusername, $mypassword and redirect to file "login_success.php"
-            session_register("myusername");
-            session_register("mypassword");
-            header("location:login_success.php");
-        } else {
-            echo "Wrong Username or Password";
+                session_register("myusername");
+                session_register("mypassword");
+                header("location:login_success.php");
+            } else {
+                echo "Wrong Username or Password";
+            }
         }
     }
 
