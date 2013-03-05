@@ -51,6 +51,7 @@ class test extends Application {
      * Call constructor of parent.
      */
     public function __construct() {
+        session_start();
         parent::__construct();
 //        throw new UnknownException();
         if(isset($_GET['q'])){
@@ -112,7 +113,12 @@ class test extends Application {
 
     private function parse() {
       $template = file_get_contents("templates/index.html");
-      $login_form = file_get_contents("templates/login-form.html");
+      if(!session_is_registered(myusername)){
+          $login_form = file_get_contents("templates/login-form.html");
+      }
+      else {
+          $login_form = "Velkommen!";
+      }
       $template = str_replace("{%region:mainmenu}", $this->menu(), $template);
       $template = str_replace("{%login-form}", $login_form, $template);
       return $template;
