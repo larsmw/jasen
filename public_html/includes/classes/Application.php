@@ -77,7 +77,7 @@ class Application extends Base {
     
     public function __destruct() {
         //parent::$log->info("Peak mem : ".(memory_get_peak_usage(TRUE)/1024)."kb");
-        var_dump(parent);
+        //var_dump(parent);
         parent::__destruct();
     }
 }
