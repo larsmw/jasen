@@ -70,7 +70,9 @@ class test extends Application {
 
     private function parse() {
       $template = file_get_contents("templates/index.html");
+      $login_form = file_get_contents("templates/login-form.html");
       $template = str_replace("{%region:mainmenu}", $this->menu(), $template);
+      $template = str_replace("{%login-form}", $login_form, $template);
       return $template;
     }
 
