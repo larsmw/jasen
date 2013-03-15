@@ -19,8 +19,8 @@ Routing ideas
   /crawler/control/start
 **/
 
-ini_set('display_errors', 'FALSE');
-ini_set('html_errors', 'FALSE');
+ini_set('display_errors', 'TRUE');
+ini_set('html_errors', 'TRUE');
 ini_set('log_errors', 'TRUE');
 //xdebug_enable();
 //xdebug_start_code_coverage();
@@ -118,7 +118,7 @@ class test extends Application {
 
     private function parse() {
       $template = file_get_contents("templates/index.html");
-      if(!session_is_registered(myusername)){
+      if(!session_is_registered('myusername')){
           $login_form = file_get_contents("templates/login-form.html");
       }
       else {
@@ -137,4 +137,5 @@ class test extends Application {
 }
 
 $t = new test();
+
 ?>
