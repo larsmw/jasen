@@ -137,6 +137,6 @@ class test extends Application {
 }
 
 $t = new test();
-c
+
 echo "Done...";
 ?>
