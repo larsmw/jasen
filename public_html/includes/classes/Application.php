@@ -73,9 +73,8 @@ class Application extends Base implements IWebApplication {
       }
     return $html;
   }
-  /*echo buildMenu(0, $menu);
-    echo "False";
-    }*/
+
+
   public function showMenu($id) {
     $con = mysql_connect("localhost", "linkhub", "was&87Bki");
     mysql_select_db("linkhub");
@@ -99,7 +98,7 @@ class Application extends Base implements IWebApplication {
   }
   
   public function __destruct() {
-    //parent::$log->info("Peak mem : ".(memory_get_peak_usage(TRUE)/1024)."kb");
+    parent::$log->info("Peak mem : ".(memory_get_peak_usage(TRUE)/1024)."kb");
     //var_dump(parent);
     parent::__destruct();
   }
