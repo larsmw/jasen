@@ -26,6 +26,4 @@ class Database extends Singleton {
     }
 }
 
-//$o = Database::getInstance();
-
 

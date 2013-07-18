@@ -2,17 +2,23 @@
   <head>
     <title>Check your webpage for broken links.</title>
     <script type="text/javascript" src="js/base.js"></script>
-    <link rel="stylesheet" href="/css/menu.css" />
+    <link rel="stylesheet" type="text/css" href="/css/menu.css" />
+    <link rel="stylesheet" type="text/css" href="/css/default.css" />
   </head>
-  <body onLoad="loadXMLDoc();">{%region:mainmenu}
+  <body onLoad="loadXMLDoc();">
+    {%region:mainmenu}
         <h1>Check your link structure</h1>
+	{%url-report}
         {%login-form}
         <h4>Enter your url here</h4>
-        <form action="check_url.php" method="post">
+        <form id="add_url" action="/addurl" method="post">
             <label for="url">Url : </label>
             <input type="text" name="url" size="40" />
-            <input type="submit" value="Check now!" />
+            <input type="submit" value="Add to Crawler" />
         </form>
+	<form id="two">
+	  <input type="hidden" name="test" value="2" />
+	</form>
         <div id="myDiv"><h2>Status from ajax</h2></div>
     </body>
 </html>

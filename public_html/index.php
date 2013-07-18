@@ -40,6 +40,28 @@ class UnknownException extends Exception {
 }
 
 
+class AddUrl extends Database {
+    public function __construct($form_id) {
+        parent::__construct();
+        var_dump($_POST);
+    }
+
+    public function get($name) {
+        if(isset($_POST['url'])) {
+            return $_POST['url'];
+        }
+        else
+            {
+                echo "Missing url";
+            }
+    }
+
+    public function insert($url) {
+        $sql = "INSERT INTO crawl_queue (url, added) VALUES (:url, NOW())";
+        $q = $this->db->prepare($sql);
+        $q->execute(array(':url' => $url));
+    }
+}
 
 
 /**
@@ -52,8 +74,8 @@ class test extends Application {
      */
     public function __construct() {
         session_start();
-        parent::__construct();
 //        throw new UnknownException();
+
         if(isset($_GET['q'])){
             $cmd = $_GET['q'];
         }
@@ -62,28 +84,31 @@ class test extends Application {
         }
         if($cmd === "crawl") {
             $Timer = 10; //seconds
-            echo "this text is from simple.php";
-            echo "Crawling... " . microtime();
+            echo "this text is from index.php<br />";
+            echo "Crawling... <br />" . microtime();
             die();
         }
+        if($cmd === "addurl") {
+            $f = new AddUrl('add_url');
+            $f->insert($f->get('url'));
+        }
+        parent::__construct();
         if($cmd === "logout") {
+            unset($_COOKIE['myusername']);
             session_start();
+            session_unset();
             session_destroy();
-            header("location:index.php");
+            header("location:/");
         }
         $this->checkFormData();
         echo $this->parse();
     }
 
+    /**
+     * Check if user login details is correct. Set cookies.
+     */
     private function checkFormData() {
-        $host = "localhost"; // Host name
-        $username = "linkhub"; // Mysql username
-        $password = "was&87Bki"; // Mysql password
-        $db_name = "linkhub"; // Database name
         $tbl_name = "users"; // Table name
-// Connect to server and select databse.
-        mysql_connect("$host", "$username", "$password") or die("cannot connect");
-        mysql_select_db("$db_name") or die("cannot select DB");
 
         $count = 0;
         if (isset($_POST['myusername']) && isset($_POST['mypassword'])) {
@@ -98,18 +123,18 @@ class test extends Application {
             $mypassword = mysql_real_escape_string($mypassword);
 
             $sql = "SELECT * FROM $tbl_name WHERE username='$myusername' and password=PASSWORD('$mypassword');";
-            $result = mysql_query($sql);
+            $result = $this->db->fetchAssoc($sql);
 
 // Mysql_num_row is counting table row
-            $count = mysql_num_rows($result);
+            $count = count($result);
 // If result matched $myusername and $mypassword, table row must be 1 row
 
             if ($count == 1) {
 
 // Register $myusername, $mypassword and redirect to file "login_success.php"
-                session_register("myusername");
-                session_register("mypassword");
-                header("location:login_success.php");
+                setcookie("myusername", $myusername, time() + 7200);
+                setcookie("mypassword", crypt($mypassword), time() + 7200);
+                header("location:index.php");
             } else {
                 echo "Wrong Username or Password";
             }
@@ -118,20 +143,22 @@ class test extends Application {
 
     private function parse() {
       $template = file_get_contents("templates/index.html");
-      if(!session_is_registered('myusername')){
+      
+      if(empty($_COOKIE['myusername'])){
           $login_form = file_get_contents("templates/login-form.html");
       }
       else {
-          $login_form = "Velkommen!";
+          $login_form = "Velkommen ".$_COOKIE['myusername']."!";
       }
       $template = str_replace("{%region:mainmenu}", $this->menu(), $template);
       $template = str_replace("{%login-form}", $login_form, $template);
+      
       return $template;
     }
 
     public function menu() {
         // check access rights
-        parent::showMenu(0);
+        return parent::showMenu(0);
     }
 
 }
