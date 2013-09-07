@@ -1,0 +1,41 @@
+#main-menu ul {
+  width: 12em;
+  list-style-type: none;
+  font-size: 0.75em;
+  display: block;
+  clear: both;
+}
+
+li {
+  font-size: normal;
+  float: left;
+  margin: 0 4px 4px 0;
+  background: #888;
+  border: 4px solid #ddd;
+  color: #fff;
+}
+
+li:hover {
+  position: relative;
+}
+
+ul ul {
+  z-index: 1;
+  position: absolute;
+  left: -999em;
+  width: auto;
+  background: #ccc;
+  background: rgba(204, 204, 204, 0.33);
+}
+
+li:hover ul {
+  top: 2em;
+  left: 3px;
+}
+
+li li {
+  margin: 0 0 3px 0;
+  background: #909;
+  background: rgba(153, 0, 153, 0.66);
+  border: 3px solid #909;
+}
