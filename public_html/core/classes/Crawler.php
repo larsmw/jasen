@@ -308,6 +308,7 @@ class Crawler extends \interfaces\Singleton {
             $sql = "INSERT INTO content_type (value) VALUES (:ct)";
             $q = $this->db->db->prepare($sql);
             $q->execute(array(':ct'=>$ct));
+            // php can return the last insert_id somehow.
             $sql = "SELECT id,value FROM content_type WHERE value like '%$ct%';";
             $r = $this->db->fetchAssoc($sql);
             return $r[0]['id'];
