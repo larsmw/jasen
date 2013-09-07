@@ -30,7 +30,12 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
 
 define("ROOT", getcwd());
 
-require_once 'includes/classes/Application.php';
+require_once 'core/classes/Application.php';
+require_once 'core/classes/Crawler.php';
+require_once 'core/classes/Pager.php';
+
+// namespaces
+use App,Crawler;
 
 /**
  * Handle errors properly
@@ -43,7 +48,7 @@ class UnknownException extends Exception {
 class AddUrl extends Database {
     public function __construct($form_id) {
         parent::__construct();
-        var_dump($_POST);
+//        var_dump($_POST);
     }
 
     public function get($name) {
@@ -52,7 +57,7 @@ class AddUrl extends Database {
         }
         else
             {
-                echo "Missing url";
+                throw new UnknownException("Missing url");
             }
     }
 
@@ -67,7 +72,7 @@ class AddUrl extends Database {
 /**
  * Test class to prove we are right.
  */
-class test extends Application {
+class test extends App\Application {
 
     /**
      * Call constructor of parent.
@@ -82,15 +87,21 @@ class test extends Application {
         else {
             $cmd = "";
         }
-        if($cmd === "crawl") {
-            $Timer = 10; //seconds
-            echo "this text is from index.php<br />";
-            echo "Crawling... <br />" . microtime();
+        $cmd = explode("/", $cmd);
+        var_dump($cmd);
+        if($cmd[0] === "crawl") {
+            $crawler = Crawler::getInstance();
+            $crawler->run();
             die();
         }
         if($cmd === "addurl") {
             $f = new AddUrl('add_url');
             $f->insert($f->get('url'));
+        }
+        if($cmd[0] === "pager") {
+            $p = new Pager();
+            $p->run();
+            die();
         }
         parent::__construct();
         if($cmd === "logout") {
@@ -150,8 +161,10 @@ class test extends Application {
       else {
           $login_form = "Velkommen ".$_COOKIE['myusername']."!";
       }
+      $crawler = Crawler\Crawler::getInstance();
       $template = str_replace("{%region:mainmenu}", $this->menu(), $template);
       $template = str_replace("{%login-form}", $login_form, $template);
+      $template = str_replace("{%url-report}", $crawler->getReport(), $template);
       
       return $template;
     }
