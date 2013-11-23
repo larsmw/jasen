@@ -152,6 +152,9 @@ class test extends App\Application {
         }
     }
 
+    /**
+     * @args NONE
+     */
     private function parse() {
       $template = file_get_contents("templates/index.html");
       
