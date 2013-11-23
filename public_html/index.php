@@ -80,7 +80,6 @@ class myApp extends \App\Application {
      */
     public function __construct() {
         session_start();
-//        throw new UnknownException();
 
         if(isset($_GET['q'])){
             $cmd = $_GET['q'];
@@ -89,7 +88,7 @@ class myApp extends \App\Application {
             $cmd = "";
         }
         $cmd = explode("/", $cmd);
-//        var_dump($cmd);
+
         if($cmd[0] === "crawl") {
             $crawler = \Crawler\Crawler::getInstance();
             $crawler->run();
