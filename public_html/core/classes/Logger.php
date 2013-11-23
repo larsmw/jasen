@@ -37,10 +37,12 @@ class Logger {
 
     // Private method that will write the text logs into the $LOGFILENAME.
     private function log($errorlevel, $value = '', $tag) {
+        echo $errorlevel." : ".$value." : ".$tag."<br />\n";
     }
 
     // Function to write not technical INFOrmation messages that will be written into $LOGFILENAME.
     public static function info($value = '', $tag = self::DEFAULT_TAG) {
+        self::log("WARNING", $value, $tag);
     }
 
     // Function to write WARNING messages that will be written into $LOGFILENAME.

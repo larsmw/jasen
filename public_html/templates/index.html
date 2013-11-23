@@ -1,24 +1,54 @@
 <html>
   <head>
     <title>Check your webpage for broken links.</title>
+    <link rel="stylesheet" type="text/css" href="css/default.css" />
     <script type="text/javascript" src="js/base.js"></script>
-    <link rel="stylesheet" type="text/css" href="/css/menu.css" />
-    <link rel="stylesheet" type="text/css" href="/css/default.css" />
   </head>
   <body onLoad="loadXMLDoc();">
-    {%region:mainmenu}
-        <h1>Check your link structure</h1>
-	{%url-report}
-        {%login-form}
-        <h4>Enter your url here</h4>
-        <form id="add_url" action="/addurl" method="post">
+    <header>
+      <div class="navbar navbar-inverse">
+	<div class="navbar-inner">
+          <div class="container">
+            <a class="brand" href="#">Linkhub</a>
+            <div class="nav-collapse collapse">
+	      
+	      {%region:mainmenu}
+            </div><!--/.nav-collapse -->
+          </div>
+	</div>
+      </div>
+    </header>
+    <section id="content" class="main">
+      <div class="container">
+	<article>
+          <h1>Check your link structure</h1>
+	  
+          <h2>Enter your url here</h2>
+          <form id="add_url" action="/addurl" method="post">
             <label for="url">Url : </label>
             <input type="text" name="url" size="40" />
             <input type="submit" value="Add to Crawler" />
-        </form>
-	<form id="two">
-	  <input type="hidden" name="test" value="2" />
-	</form>
-        <div id="myDiv"><h2>Status from ajax</h2></div>
-    </body>
+          </form><br />
+	  <form id="two" action="/crawl" method="post">
+	    <fieldset>
+	      <legend>Manage crawler:</legend>
+	      <input type="submit" name="start" value="Start Crawling" />
+	    </fieldset>
+	  </form>
+	</article>
+	  
+	<div class="region-right">
+	  <section>
+	    <div class="url-report">{%url-report}</div>
+	  </section>
+	  <section>
+            {%login-form}
+	  </section>
+	</div>
+      </div>
+    </section>
+    <footer>
+      &copy; Lars Nielsen 2013
+    </footer>
+  </body>
 </html>

@@ -1,11 +1,13 @@
 <?php
 
+namespace App;
+
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
 
-require_once ROOT.'/includes/classes/Logger.php';
+require_once ROOT.'/core/classes/Logger.php';
 
 /**
  * Description of Base
@@ -18,13 +20,13 @@ class Base {
     
     public function __construct() {
         //$this->log = new Logger(ROOT.'/../logs/app.log');
-        Logger::info("wooot...");
+//        \Logger::info("wooot...");
 //        $this->log->debug("Base is starting.");
     }
     
     public function __destruct() {
 //        $this->log = new Logger(ROOT.'/../logs/app.log');
-//        $this->log->info("Peak mem : ".(memory_get_peak_usage(TRUE)/1024)."kb");
+//        \Logger::info("Peak mem : ".(memory_get_peak_usage(TRUE)/1024)."kb");
     }
 }
 

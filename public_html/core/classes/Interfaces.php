@@ -1,5 +1,6 @@
 <?php
 
+namespace interfaces;
 
 interface IWebApplication
 {
@@ -17,7 +18,7 @@ interface IWebObject
 
 class Singleton
 {
-    protected static $instance = null;
+    protected static $instances = array();
     protected function __construct()
     {
         //Thou shalt not construct that which is unconstructable!
@@ -29,9 +30,10 @@ class Singleton
 
     public static function getInstance()
     {
-        if (!isset(static::$instance)) {
-            static::$instance = new static;
+        $cls = get_called_class();
+        if (!isset(self::$instances[$cls])) {
+            self::$instances[$cls] = new static;
         }
-        return static::$instance;
+        return self::$instances[$cls];
     }
 }

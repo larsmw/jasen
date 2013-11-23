@@ -27,6 +27,7 @@ ini_set('log_errors', 'TRUE');
 
 header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
+header('Content-type: text/html; charset=utf-8');
 
 define("ROOT", getcwd());
 
@@ -70,9 +71,9 @@ class AddUrl extends Database {
 
 
 /**
- * Test class to prove we are right.
+ * Implementation of Application class
  */
-class test extends App\Application {
+class myApp extends \App\Application {
 
     /**
      * Call constructor of parent.
@@ -88,9 +89,9 @@ class test extends App\Application {
             $cmd = "";
         }
         $cmd = explode("/", $cmd);
-        var_dump($cmd);
+//        var_dump($cmd);
         if($cmd[0] === "crawl") {
-            $crawler = Crawler::getInstance();
+            $crawler = \Crawler\Crawler::getInstance();
             $crawler->run();
             die();
         }
@@ -176,7 +177,6 @@ class test extends App\Application {
 
 }
 
-$t = new test();
+$m = new myApp();
 
 
-?>

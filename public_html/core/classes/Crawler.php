@@ -5,6 +5,12 @@ namespace Crawler;
 require_once "Database.php";
 require_once "Robots.php";
 
+/* * * * * * * * * 
+ * Crawlere skal kunne kaldes fra flere forskellige interfaces.
+ * Dvs den må ikke skrive html, men skal returere nogle menings-
+ * fyldte fejlkoder og svar.
+ */
+
 class Crawler extends \interfaces\Singleton {
 
     private $db;
@@ -13,6 +19,10 @@ class Crawler extends \interfaces\Singleton {
         $this->db = \Database::getInstance();
     }
 
+    /**
+     * getReport returnerer html med noget statistik.
+     * Denne funktion skal flyttes ud at crawleren.
+     */
     public function getReport() {
         $r = $this->db->fetchAssoc("SELECT count(*) as num FROM urls;");
         $s = "<h3>Stats</h3>";
@@ -51,6 +61,7 @@ class Crawler extends \interfaces\Singleton {
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_VERBOSE, 0);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/4.0 (compatible;)");
         curl_setopt($ch, CURLOPT_URL, ($url));
         $response = curl_exec($ch);
@@ -70,105 +81,107 @@ class Crawler extends \interfaces\Singleton {
         $urls = $this->db->fetchAssoc($sql);
         // For each url that should be crawled
         foreach($urls as $url) {
-            echo $url['url']."<br />";
-            $url_part = parse_url($url['url']);
-            //var_dump($url_part);
-            if(empty($url_part['host'])) {
-                echo "<b>Invalid url</b><br />";
-                
-                // remove url from crawl_queue
-                $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
-                $q = $this->db->db->prepare($sql);
-                $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
-                $q->execute();continue;
-            }
-            // check if time is up for next visit...
-            $sql = "SELECT name,next_visit FROM domain WHERE name='".$url_part['host']."' AND next_visit < NOW();";
-            $r = $this->db->fetchAssoc($sql);
-            //echo $sql;
-            //echo "<b>TIMESUP!!!</b>";
-            //var_dump($r);
-            if(empty($r)) {
-                echo "<b><small>NOT YET</small></b><br />"; // continue to next url
-                continue;
-            }
-
             try {
-            $robot = new \robotstxt($url_part['scheme']."://".$url_part['host']);
-            }
-            catch( Exception $e ) {
-            }
-            if($robot->isUrlBlocked($url['url'])) {
-                echo "Blocked by robots<br />";
-                // remove url from crawl_queue
-                $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
-                $q = $this->db->db->prepare($sql);
-                $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
-                $q->execute();
-                continue;
-            }
-
-            $contenttype = get_headers($url['url'],1)['Content-Type'];
-//            var_dump($contenttype);
-            if($contenttype === "text/html") {
-
-                $response = $this->downloadUrl($url['url']);
-                //var_dump($response);
-                // fetch urls from response
-                echo "Downloaded ".strlen($response)." bytes.<br />";
-                
-                $fn = $url_part['host'].$url_part['path'];
-                $dn = dirname($fn);
-                $bn = basename($fn);
-                var_dump($dn);
-                var_dump($bn);
-                $this->rmkdir("files/".$dn);
-                echo basename($fn)."<br />";
-                file_put_contents("files/".$dn."/".$bn."".urlencode($url_part['query']), $response);
-
-                $this->updateNextVisit($url['url']);
-                // Gets links from the page and formats them to a full valid url:
-                echo "urls in page : ";
-                $urls = $this->pageLinks($response, $url['url'], true);
-//                var_dump($urls);
-                //echo count($links);
-            }
-            else {
-//                echo var_export($contenttype, TRUE)." : ";
-                $content = $this->downloadUrl($url['url']);
-
-                $finfo = new \finfo(FILEINFO_MIME);
-                echo $finfo->buffer($content) . "\n";
-                if($finfo->buffer($content) == "application/x-empty") {
-                    echo "No content!";
+//            echo $url['url']."<br />";
+                $url_part = parse_url($url['url']);
+                //var_dump($url_part);
+                if(empty($url_part['host'])) {
+//                echo "<b>Invalid url</b><br />";
                     // remove url from crawl_queue
-                    $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
-                    $q = $this->db->db->prepare($sql);
-                    $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
-                    $q->execute();
-                    break;
+                    /*$sql = "DELETE FROM crawl_queue WHERE id = :cid;";
+                      $q = $this->db->db->prepare($sql);
+                      $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
+                      $q->execute();*/
+                    $this->dequeue($url['id']);
+                    
+                    throw new Exception("Invalid url");
+                    
+                    continue;
                 }
-
-                $fn = $url_part['host'].$url_part['path'];
-                $dn = dirname($fn);
-                $bn = basename($fn);
-                var_dump($bn);
-                $this->rmkdir("files/".$dn);
-                echo basename($fn)."<br />";
-                file_put_contents("files/".$dn."/".$bn, $content);
+                // check if time is up for next visit...
+                $sql = "SELECT name,next_visit FROM domain WHERE name='".$url_part['host']."' AND next_visit < NOW();";
+                $r = $this->db->fetchAssoc($sql);
+                //echo $sql;
+                //echo "<b>TIMESUP!!!</b>";
+                //var_dump($r);
+                if(empty($r)) {
+                    echo "<b><small>NOT YET</small></b><br />"; // continue to next url
+                    //throw new Exception("Crawling too early");
+                    continue;
+                }
+                
+                try {
+                    $robot = new \robotstxt($url_part['scheme']."://".$url_part['host']);
+                }
+                catch( Exception $e ) {
+                }
+                if($robot->isUrlBlocked($url['url'])) {
+//                echo "Blocked by robots<br />";
+                    // remove url from crawl_queue
+                    $this->dequeue($url['id']);
+                    throw new Exception("Url Blocked by Robots.tst");
+                    continue;
+                }
+                
+                $contenttype = get_headers($url['url'],1)['Content-Type'];
+//            var_dump($contenttype);
+                if($contenttype[0] === "text/html") {
+                    var_dump(get_headers($url['url'],1)[0]);
+                    $response = $this->downloadUrl($url['url']);
+                    //var_dump($response);
+                    // fetch urls from response
+//                echo "Downloaded ".strlen($response)." bytes.<br />";
+                    
+                    $fn = $url_part['host'].$url_part['path'];
+                    $dn = dirname($fn);
+                    $bn = basename($fn);
+                    $q = (isset($url_part['query']))?$url_part['query']:'';
+//                var_dump($dn);
+//                var_dump($bn);
+                    $this->rmkdir("files/".$dn);
+//                echo basename($fn)."<br />";
+                    file_put_contents("files/".$dn."/".$bn."".urlencode($q), $response);
+                    
+                    $this->updateNextVisit($url['url']);
+                    // Gets links from the page and formats them to a full valid url:
+//                echo "urls in page : ";
+                    $urls = $this->pageLinks($response, $url['url'], true);
+//                var_dump($urls);
+                    //echo count($links);
+                }
+                else {
+                    echo var_export($contenttype, TRUE)." : ";
+                    $content = $this->downloadUrl($url['url']);
+                    
+                    $finfo = new \finfo(FILEINFO_MIME);
+//                echo $finfo->buffer($content) . "\n";
+                    if($finfo->buffer($content) == "application/x-empty") {
+//                    echo "No content!";
+                        // remove url from crawl_queue
+                        $this->dequeue($url['id']);
+                        echo "No content on url<br />Url ".$url['url']." removed from Queue<br />\n";
+                        continue;
+                    }
+                    
+                    $fn = $url_part['host'].$url_part['path'];
+                    $dn = dirname($fn);
+                    $bn = basename($fn);
+                    var_dump($bn);
+                    $this->rmkdir("files/".$dn);
+                    echo basename($fn)."<br />";
+                    file_put_contents("files/".$dn."/".$bn, $content);
+                    // remove url from crawl_queue
+                    var_dump($url['id']);
+                    
+                    $this->dequeue($url['id']);
+                }
+                
                 // remove url from crawl_queue
-                var_dump($url['id']);
-                $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
-                $q = $this->db->db->prepare($sql);
-                $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
-                $q->execute();
+                $this->dequeue($url['id']);
             }
-
-            // remove url from crawl_queue
-            $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
-            $q = $this->db->db->prepare($sql);
-            $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
-            $q->execute();
+            catch(Exception $e) {
+                echo $e->getMessage();
+            }
         }
         echo "</body></html>";
     }
@@ -267,6 +280,14 @@ class Crawler extends \interfaces\Singleton {
         $q->execute(array(':url'=>$url, ':domid'=>$domain_id));
     }
 
+    private function dequeue($url_id) {
+        // remove url from crawl_queue
+        $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
+        $q = $this->db->db->prepare($sql);
+        $q->BindParam('cid', $url_id, \PDO::PARAM_INT);
+        $q->execute();
+    }
+
     private function getSchemeID($scheme) {
         if($scheme === 'http') return 0;
         if($scheme === 'https') return 1;
@@ -320,8 +341,9 @@ class Crawler extends \interfaces\Singleton {
     }
 
     private function rmkdir($path, $mode = 0777) {
+        echo "Making dirs<br />\n";
         $dirs = explode(DIRECTORY_SEPARATOR , $path);
-        var_dump($dirs);
+//        var_dump($dirs);
         $count = count($dirs);
         $path = '.';
         for ($i = 0; $i < $count; ++$i) {

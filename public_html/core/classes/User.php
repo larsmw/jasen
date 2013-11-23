@@ -1,10 +1,11 @@
 <?php
 
-require_once ROOT.'/includes/classes/Interfaces.php';
-require_once ROOT.'/includes/classes/Base.php';
+namespace App;
 
+require_once ROOT.'/core/classes/Interfaces.php';
+require_once ROOT.'/core/classes/Base.php';
 
-class User extends Base implements IWebObject {
+class User extends Base implements \interfaces\IWebObject {
 
   public function onRun( $sender, $args ) {
       //var_dump($sender); var_dump($args);

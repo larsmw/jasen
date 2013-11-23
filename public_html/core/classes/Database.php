@@ -9,7 +9,7 @@ define('DB_USER', 'se');
 define('DB_PASS', '1234');
 
 
-class Database extends Singleton {
+class Database extends interfaces\Singleton {
 
     public $db;
 
@@ -23,7 +23,7 @@ class Database extends Singleton {
         $stmt = $this->db->query($sql);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $result;
-    }
+    }        
 }
 
 

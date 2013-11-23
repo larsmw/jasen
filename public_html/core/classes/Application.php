@@ -1,16 +1,18 @@
 <?php
 
-require_once ROOT.'/includes/classes/Base.php';
-require_once ROOT.'/includes/classes/User.php';
-require_once ROOT.'/includes/classes/Interfaces.php';
-require_once ROOT.'/includes/classes/Database.php';
+namespace App;
+
+require_once ROOT.'/core/classes/Base.php';
+require_once ROOT.'/core/classes/User.php';
+require_once ROOT.'/core/classes/Interfaces.php';
+require_once ROOT.'/core/classes/Database.php';
 
 /**
  * Description of Application
  *
  * @author lars
  */
-class Application extends Base implements IWebApplication {
+class Application extends Base implements \interfaces\IWebApplication {
 
   private $_menus = array();
   private $_runObjects = array();  
@@ -21,9 +23,10 @@ class Application extends Base implements IWebApplication {
    */
   public function __construct() {
     parent::__construct();
-    $this->db = Database::getInstance();
+    $this->db = \Database::getInstance();
     $this->addRun(new User());
     $this->onRun();
+    //$this->showDBStats();
   }
   
   public function addRun( $observer )
@@ -53,16 +56,16 @@ class Application extends Base implements IWebApplication {
     $html = "";
     if (isset($menu['parents'][$parent]))
       {
-	$html .= "<ul>\n";
+	$html .= "<ul class=\"nav\">\n";
 	foreach ($menu['parents'][$parent] as $itemId)
 	  {
 	    if(!isset($menu['parents'][$itemId]))
 	      {
-		$html .= "<li>\n  <a href='".$menu['items'][$itemId]['link']."'>".$menu['items'][$itemId]['label']."</a>\n</li> \n";
+		$html .= "<li class=\"dropdown\">\n  <a href='#'>".$menu['items'][$itemId]['label']."</a>\n</li> \n";
 	      }
 	    if(isset($menu['parents'][$itemId]))
 	      {
-		$html .= "<li>\n  <a href='".$menu['items'][$itemId]['link']."'>".$menu['items'][$itemId]['label']."</a> \n";
+		$html .= "<li class=\"dropdown\">\n  <a href='".$menu['items'][$itemId]['link']."' class=\"dropdown-toggle\">".$menu['items'][$itemId]['label']."</a> \n";
 		$html .= $this->buildMenu($itemId, $menu);
 		$html .= "</li> \n";
 	      }
@@ -75,7 +78,7 @@ class Application extends Base implements IWebApplication {
 
   public function showMenu($id) {
 
-      $sql = "SELECT id, label, link, parent FROM menu_item ORDER BY parent, label";
+      $sql = "SELECT id, label, link, parent FROM menu_item ORDER BY weight, parent, label";
 
       $result = $this->db->fetchAssoc($sql);
 
@@ -96,11 +99,22 @@ class Application extends Base implements IWebApplication {
       
       return "<nav id=\"main-menu\">".$this->buildMenu(0, $menu)."</nav>";
   }
-  
+
+  /**
+   * Show some statistics and close down nicely
+   */
   public function __destruct() {
-//    parent::$log->info("Peak mem : ".(memory_get_peak_usage(TRUE)/1024)."kb");
+    echo "Peak mem : ".(memory_get_peak_usage(TRUE)/1024)."kb";
     //var_dump(parent);
     parent::__destruct();
+  }
+  
+  private function showDBStats() {
+      $r = $this->db->fetchAssoc("SHOW STATUS;");
+      //var_dump($r);
+      foreach($r as $v) {
+          echo $v['Variable_name']." = '".$v['Value']."'<br />";
+      }
   }
 }
 
