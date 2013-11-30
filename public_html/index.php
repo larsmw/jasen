@@ -73,14 +73,14 @@ class AddUrl extends Database {
  * Test class to prove we are right.
  */
 class test extends App\Application {
-
+    
     /**
      * Call constructor of parent.
      */
     public function __construct() {
         session_start();
 //        throw new UnknownException();
-
+        
         if(isset($_GET['q'])){
             $cmd = $_GET['q'];
         }
