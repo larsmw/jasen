@@ -35,7 +35,7 @@ class Database {
     }
     
     public function fetchAssoc($sql) {
-        $stmt = $this->db->query($sql);
+        $stmt = self::$db->query($sql);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $result;
     }
