@@ -22,10 +22,13 @@ class Database {
     public static function getInstance()
     {
         global $databases;
-        var_dump($databases);
+//        var_dump($databases);
         if (is_null(self::$_instance)) {
             self::$_instance = new self();
-            $this->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, DB_USER, DB_PASS);
+            $this->db = new PDO('mysql:host='.$databases['default']['host'].
+                                ';dbname='.$databases['default']['db'],
+                                $databases['default']['user'], 
+                                $databases['default']['password']);
             $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
         return self::$_instance;
