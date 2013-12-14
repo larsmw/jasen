@@ -25,11 +25,11 @@ class Database {
 //        var_dump($databases);
         if (is_null(self::$_instance)) {
             self::$_instance = new self();
-            $this->db = new PDO('mysql:host='.$databases['default']['host'].
+            self::db = new PDO('mysql:host='.$databases['default']['host'].
                                 ';dbname='.$databases['default']['db'],
                                 $databases['default']['user'], 
                                 $databases['default']['password']);
-            $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            self::db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
         return self::$_instance;
     }
