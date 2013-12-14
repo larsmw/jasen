@@ -72,7 +72,7 @@ class AddUrl extends Database {
 /**
  * Test class to prove we are right.
  */
-class test extends App\Application {
+class test extends \Application {
     
     /**
      * Call constructor of parent.

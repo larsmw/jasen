@@ -17,7 +17,7 @@ interface IWebObject
 
 class Singleton
 {
-    protected static $instance = null;
+    protected static $_instance = null;
     protected function __construct()
     {
         //Thou shalt not construct that which is unconstructable!
@@ -29,9 +29,9 @@ class Singleton
 
     public static function getInstance()
     {
-        if (!isset(static::$instance)) {
-            static::$instance = new static;
+        if (is_null(self::$_instance)) {
+            self::$_instance = new self();
         }
-        return static::$instance;
+        return self::$_instance;
     }
 }
