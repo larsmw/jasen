@@ -21,6 +21,7 @@ class Database {
 
     public static function getInstance()
     {
+        global $databases;
         var_dump($databases);
         if (is_null(self::$_instance)) {
             self::$_instance = new self();
