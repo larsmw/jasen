@@ -1,9 +1,9 @@
 <?php
 
-require_once ROOT.'/includes/classes/Base.php';
-require_once ROOT.'/includes/classes/User.php';
-require_once ROOT.'/includes/classes/Interfaces.php';
-require_once ROOT.'/includes/classes/Database.php';
+require_once ROOT.'/core/classes/Base.php';
+require_once ROOT.'/core/classes/User.php';
+require_once ROOT.'/core/classes/Interfaces.php';
+require_once ROOT.'/core/classes/Database.php';
 
 /**
  * Description of Application
