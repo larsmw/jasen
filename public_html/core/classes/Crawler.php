@@ -4,6 +4,7 @@ namespace Crawler;
 
 require_once "Database.php";
 require_once "Robots.php";
+require_once "Interfaces.php";
 
 class Crawler extends \interfaces\Singleton {
 
