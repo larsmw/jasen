@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-require_once ROOT.'/includes/classes/Logger.php';
+require_once ROOT.'/core/classes/Logger.php';
 
 /**
  * Description of Base
