@@ -9,7 +9,7 @@ define('DB_USER', 'se');
 define('DB_PASS', '1234');
 
 
-class Database extends \Singleton {
+class Database {
 
     public $db;
 
