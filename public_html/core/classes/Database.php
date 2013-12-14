@@ -2,11 +2,7 @@
 
 require_once 'Interfaces.php';
 
-define('DB_TYPE', 'mysql');
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'se_links');
-define('DB_USER', 'se');
-define('DB_PASS', '1234');
+require_once ROOT.'/conf.php';
 
 
 class Database {
@@ -25,6 +21,7 @@ class Database {
 
     public static function getInstance()
     {
+        var_dump($databases);
         if (is_null(self::$_instance)) {
             self::$_instance = new self();
             $this->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, DB_USER, DB_PASS);
