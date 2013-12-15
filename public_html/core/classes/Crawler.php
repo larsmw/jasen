@@ -6,12 +6,30 @@ require_once "Database.php";
 require_once "Robots.php";
 require_once "Interfaces.php";
 
-class Crawler extends \Singleton {
+class Crawler /*extends \Singleton*/ {
 
-    private $db;
+    protected static $db;
 
-    public function __construct() {
-        $this->db = \Database::getInstance();
+    protected static $_instance = null;
+
+    protected function __construct()
+    {
+        //Thou shalt not construct that which is unconstructable!
+    }
+    protected function __clone()
+    {
+        //Me not like clones! Me smash clones!
+    }
+
+    public static function getInstance()
+    {
+        global $databases;
+//        var_dump($databases);
+        if (is_null(self::$_instance)) {
+            self::$_instance = new self();
+            self::$db = \Database::getInstance();
+        }
+        return self::$_instance;
     }
 
     public function getReport() {

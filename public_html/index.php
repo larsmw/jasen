@@ -167,7 +167,7 @@ class test extends \Application {
       $crawler = Crawler\Crawler::getInstance();
       $template = str_replace("{%region:mainmenu}", $this->menu(), $template);
       $template = str_replace("{%login-form}", $login_form, $template);
-      $template = str_replace("{%url-report}", $crawler->getReport(), $template);
+      //$template = str_replace("{%url-report}", $crawler->getReport(), $template);
       
       return $template;
     }
