@@ -8,7 +8,7 @@ class User extends Base implements IWebPlugin {
 
   public function onRun( $sender, $args ) {
       echo "User object invoked...";
-      //var_dump($sender); var_dump($args);
+      var_dump($sender); var_dump($args);
   }
 
   public function onMenu( &$menu ) {
