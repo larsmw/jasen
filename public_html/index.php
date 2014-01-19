@@ -45,7 +45,7 @@ class UnknownException extends Exception {
 }
 
 
-class AddUrl extends Database {
+class UrlQueue extends Database {
     public function __construct($form_id) {
         parent::__construct();
 //        var_dump($_POST);
@@ -61,7 +61,7 @@ class AddUrl extends Database {
             }
     }
 
-    public function insert($url) {
+    public function add($url) {
         $sql = "INSERT INTO crawl_queue (url, added) VALUES (:url, NOW())";
         $q = $this->db->prepare($sql);
         $q->execute(array(':url' => $url));
@@ -95,8 +95,8 @@ class test extends \Application {
             die();
         }
         if($cmd === "addurl") {
-            $f = new AddUrl('add_url');
-            $f->insert($f->get('url'));
+            $url = new UrlQueue('add_url');
+            $url->add($f->get('url'));
         }
         if($cmd[0] === "pager") {
             $p = new Pager();
