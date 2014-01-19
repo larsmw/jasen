@@ -12,6 +12,7 @@ class User extends Base implements IWebPlugin {
   }
 
   public function onMenu( &$menu ) {
-      //var_dump($menu);
+      echo "onMenu<br />";
+      var_dump($menu);
   }
 }
