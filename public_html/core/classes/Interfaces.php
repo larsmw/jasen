@@ -7,7 +7,7 @@ interface IWebApplication
   function addMenu( $menu );
 }
 
-interface IWebObject 
+interface IWebPlugin
 {
   function onRun( $sender, $args );
   function onMenu( &$menu );
