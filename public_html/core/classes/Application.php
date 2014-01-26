@@ -77,7 +77,11 @@ class Application extends Base implements IWebApplication {
 
       $sql = "SELECT id, label, link, parent FROM menu_item ORDER BY parent, label";
 
+      try {
       $result = $this->db->fetchAssoc($sql);
+      } catch (Exception $e) {
+          
+      }
 
       // Create a multidimensional array to conatin a list of items and parents
       $menu = array(

@@ -30,6 +30,8 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
 
 define("ROOT", getcwd());
 
+require_once 'core/core.php';
+
 require_once 'core/classes/Application.php';
 require_once 'core/classes/Crawler.php';
 require_once 'core/classes/Pager.php';
