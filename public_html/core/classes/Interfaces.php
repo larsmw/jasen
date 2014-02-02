@@ -13,7 +13,9 @@ interface IWebPlugin
   function onMenu( &$menu );
 }
 
-
+interface Plugin {
+    function run();
+}
 
 class Singleton
 {

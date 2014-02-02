@@ -2,7 +2,7 @@
 
 /**
  * This is a search engine...
- * 
+ *
  * @author Lars Nielsen <lars@lfweb.dk>
  */
 
@@ -11,7 +11,7 @@ Routing ideas
 
   /MODULE/ID/METHOD
 
-  eg. 
+  eg.
   /page/23/view
   /search/the+string+to+find/list
   /admin/user/
@@ -31,6 +31,7 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
 define("ROOT", getcwd());
 
 require_once 'core/core.php';
+// Death come here...
 
 require_once 'core/classes/Application.php';
 require_once 'core/classes/Crawler.php';
@@ -43,7 +44,7 @@ use App,Crawler;
  * Handle errors properly
  */
 class UnknownException extends Exception {
-    
+
 }
 
 
@@ -75,14 +76,14 @@ class UrlQueue extends Database {
  * Test class to prove we are right.
  */
 class test extends \Application {
-    
+
     /**
      * Call constructor of parent.
      */
     public function __construct() {
         session_start();
 //        throw new UnknownException();
-        
+
         if(isset($_GET['q'])){
             $cmd = $_GET['q'];
         }
@@ -159,7 +160,7 @@ class test extends \Application {
      */
     private function parse() {
       $template = file_get_contents("templates/index.html");
-      
+
       if(empty($_COOKIE['myusername'])){
           $login_form = file_get_contents("templates/login-form.html");
       }
@@ -170,7 +171,7 @@ class test extends \Application {
       $template = str_replace("{%region:mainmenu}", $this->menu(), $template);
       $template = str_replace("{%login-form}", $login_form, $template);
       //$template = str_replace("{%url-report}", $crawler->getReport(), $template);
-      
+
       return $template;
     }
 

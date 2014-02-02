@@ -2,17 +2,20 @@
 
 require_once 'Interfaces.php';
 
-require_once ROOT.'/../../conf.php';
+//require_once ROOT.'/Config.php';
 
 
 class Database {
 
-    protected static $db = null;
+    public static $db = null;
 
     protected static $_instance = null;
-    protected function __construct()
+    public function __construct()
     {
         //Thou shalt not construct that which is unconstructable!
+        $this->db = new PDO('mysql:host=localhost;dbname=se_links', 'root', 'was87Bki');
+        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
     }
     protected function __clone()
     {
@@ -25,20 +28,15 @@ class Database {
 //        var_dump($databases);
         if (is_null(self::$_instance)) {
             self::$_instance = new self();
-            self::$db = new PDO('mysql:host='.$databases['default']['host'].
-                                ';dbname='.$databases['default']['db'],
-                                $databases['default']['user'], 
-                                $databases['default']['password']);
+            self::$db = new PDO('mysql:host=localhost;dbname=se_links', 'root', 'was87Bki');
             self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
         return self::$_instance;
     }
-    
+
     public function fetchAssoc($sql) {
-        $stmt = self::$db->query($sql);
+        $stmt = $this->db->query($sql);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $result;
     }
 }
-
-

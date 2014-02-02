@@ -1,28 +1,30 @@
 <?php
 
-function __autoload($class_name) {
+/*function __autoload($class_name) {
    require_once $class_name . '.php';
-}
+   }*/
 
-interface Plugin {
-    function run();
-}
+include_once("classes/Interfaces.php");
+
+require_once("Config.php");
 
 class EventDispatcher {
-    private $map;
+    private $map,$obejcts;
 
     function addListener($arg1, $arg2 = null) {
-      var_dump($arg1);
-        if (is_a($arg1, 'Plugin')) {
-            return $arg1->bindListeners($this);
-        }
-        $this->map[$arg1][] = $arg2;
+            if(!isset($this->objects[$arg1])) {
+                $this->objects[$arg1] = new $arg1;
+            }
+            foreach(get_class_methods($arg1) as $method) {
+                $this->map[$method][] = $arg1;
+            }
     }
 
     function invoke($eventName, $data = null) {
-        var_dump($this->map);
-        foreach ($this->map[$eventName] as $callback) {
-            call_user_func_array($callback, array($data));
+        if(isset($this->map[$eventName])) {
+            foreach ($this->map[$eventName] as $callback) {
+                call_user_func_array(array($this->objects[$callback], $eventName), array($data));
+            }
         }
     }
 }
@@ -30,14 +32,36 @@ class EventDispatcher {
 class Core {
 
     public function __construct() {
-//        var_dump(get_declared_interfaces());
+        // Find plugins
+        $files = scandir(ROOT."/core/classes");
+//        var_dump($files);
+        foreach($files as $file) {
+            if(preg_match("/^.*\.(inc|php)$/i", $file)) {
+                include_once(ROOT."/core/classes/".$file);
+            }
+        }
         $d = new EventDispatcher();
         foreach(get_declared_classes() as $c) {
-	  if(in_array('Plugin', class_implements($c))) {
-            var_dump(get_class_methods($c));
-	  }
+            if(in_array('Plugin', class_implements($c))) {
+                $d->addListener($c);
+            }
         }
+        $d->invoke("init");
         $d->invoke("run");
+        $d->invoke("destroy");
+    }
+}
+
+class App implements Plugin {
+    private $config;
+
+    public function init() {
+        $this->config = new Config();
+    }
+
+    public function run() {
+        var_dump($this->config);
+        echo "App starting...";
     }
 }
 
@@ -49,4 +73,6 @@ class MyPlugin implements Plugin {
 
 $c = new Core();
 
+echo xdebug_memory_usage()." bytes memory<br />";
+echo xdebug_time_index()." seconds";
 die("Core ended");
