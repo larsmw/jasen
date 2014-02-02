@@ -20,6 +20,7 @@ class EventDispatcher {
     }
 
     function invoke($eventName, $data = null) {
+        var_dump($this->map);
         foreach ($this->map[$eventName] as $callback) {
             call_user_func_array($callback, array($data));
         }
