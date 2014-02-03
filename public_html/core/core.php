@@ -60,7 +60,7 @@ class App implements Plugin {
     }
 
     public function run() {
-        var_dump($this->config);
+//        var_dump($this->config);
         echo "App starting...";
     }
 }

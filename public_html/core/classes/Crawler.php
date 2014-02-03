@@ -378,7 +378,7 @@ class Crawler implements \Plugin {
         for ($i = 0; $i < $count; ++$i) {
             $path .= DIRECTORY_SEPARATOR . $dirs[$i];
             if (!is_dir($path)) {
-                echo "Creating dir : ";
+//                echo "Creating dir : ";
 //                var_dump($path);
                 if(!mkdir($path, $mode)) {
                     return false;

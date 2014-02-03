@@ -2,7 +2,7 @@
 
 require_once 'Interfaces.php';
 
-//require_once ROOT.'/Config.php';
+require_once ROOT.'/../conf.php';
 
 
 class Database {
@@ -12,8 +12,10 @@ class Database {
     protected static $_instance = null;
     public function __construct()
     {
+        global $databases;
+//        var_dump($databases);
         //Thou shalt not construct that which is unconstructable!
-        $this->db = new PDO('mysql:host=localhost;dbname=se_links', 'root', 'was87Bki');
+        $this->db = new PDO("mysql:host=".$databases['default']['host'].";dbname=".$databases['default']['db']."", $databases['default']['user'], $databases['default']['password']);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     }
