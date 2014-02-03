@@ -94,12 +94,33 @@ class Crawler implements \Plugin {
         echo "</head><body>";
         echo date(DATE_ATOM)."<br />\n";
 
-        $sql = "SELECT c.id,c.url,d.next_visit FROM crawl_queue c inner join domain d on d.id=c.domain_id group by d.id order by d.next_visit asc limit ".$numUrls.";";
-        $urls = $this->db->fetchAssoc($sql);
-        $dl_total = 0;
+        $sql = "SELECT id FROM `domain` WHERE next_visit<NOW() order by next_visit ASC limit 20;";
+        $ids = $this->db->fetchAssoc($sql);
+//        var_dump($ids);
+        foreach($ids as $id) {
+            $db_ids[] = intval($id['id']);
+        }
+//        var_dump(array_values($db_ids));
+        
+//        $sql = "SELECT c.id,c.url FROM crawl_queue c WHERE domain_id = '".$db_id."' order by id ASC limit 1;";
+//        $urls = $this->db->fetchAssoc($sql);
+//        var_dump($urls,$sql);
 
+
+//        $sql = "SELECT c.id,c.url,d.next_visit FROM crawl_queue c inner join domain d on d.id=c.domain_id group by d.id order by d.next_visit asc limit ".$numUrls.";";
+        $dl_total = 0;
         // For each url that should be crawled
-        foreach($urls as $url) {
+//        die();
+        foreach($db_ids as $db_id) {
+            $sql = "SELECT c.id,c.url FROM crawl_queue c WHERE c.domain_id = '".$db_id."' order by id ASC limit 1;";
+            $url = $this->db->fetchAssoc($sql);
+//            var_dump($url,$sql);
+            if(!count($url)) {
+                $this->updateNextVisitDomainID($db_id);
+                continue;
+            }
+            $url = $url[0];
+            
             echo "Crawling : " . $this->limit_text($url['url'], 70)."";
             ob_flush();
 // url might not have id
@@ -198,7 +219,7 @@ class Crawler implements \Plugin {
 //                var_dump($url['id']);
                 $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
                 $q = $this->db->db->prepare($sql);
-                $q->BindParam('cid', $url['c.id'], \PDO::PARAM_INT);
+                $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
                 $q->execute();
             }
 
@@ -304,6 +325,10 @@ class Crawler implements \Plugin {
     private function updateNextVisit($domainName, $seconds = 600) {
         $dID = $this->getDomainID(parse_url($domainName)['host']);
 //        var_dump($dID);
+        $this->updateNextVisitDomainID($dID, $seconds);
+    }
+
+    private function updateNextVisitDomainID($dID, $seconds = 600) {
         $sql = "UPDATE domain SET next_visit=DATE_ADD(NOW(), INTERVAL :sec SECOND) WHERE id=:id;";
         $q = $this->db->db->prepare($sql);
         $q->execute(array(':id'=>$dID, ':sec'=>$seconds));
