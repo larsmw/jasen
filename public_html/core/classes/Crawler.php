@@ -92,39 +92,38 @@ class Crawler implements \Plugin {
         echo "<meta http-equiv=\"refresh\" content=\"5\">";
         echo "</head><body>";
         echo date(DATE_ATOM)."<br />\n";
-//        $sql = "SELECT * FROM crawl_queue group by domain_id order by added asc limit ".$numUrls.";";
+
         $sql = "SELECT c.id,c.url,d.next_visit FROM crawl_queue c inner join domain d on d.id=c.domain_id group by d.id order by d.next_visit asc limit ".$numUrls.";";
         $urls = $this->db->fetchAssoc($sql);
-//        var_dump($urls);
-        //die();
         $dl_total = 0;
+
         // For each url that should be crawled
         foreach($urls as $url) {
             echo "Crawling : " . $this->limit_text($url['url'], 70)."";
+
+// url might not have id
+//            $url_id = $this->getUrlID($url['url']);
+            
+//            var_dump($url_id);
+
+/*            $sql = "INSERT INTO url_visits (url_id) VALUES (:url_id)";
+            $q = $this->db->db->prepare($sql);
+            $q->execute(array(':url_id'=>$url_id));*/
+
             $url_part = parse_url($url['url']);
-            //var_dump($url_part);
-            if(empty($url_part['host'])) {
-                $this->dlStatus("Invalid url");
+            //var_dump((filter_var($url['url'], FILTER_VALIDATE_URL)));
+            if(empty($url_part['host']) || (filter_var($url['url'], FILTER_VALIDATE_URL) == false)) {
+                echo "<b>Invalid url</b><br />";
 
                 // remove url from crawl_queue
                 $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
                 $q = $this->db->db->prepare($sql);
                 $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
-                $q->execute();continue;
+                $q->execute();
+                continue;
             }
 
             if(!isset($url_part['path'])) $url_part['path'] = "/";
-
-            // check if time is up for next visit...
-/*            $sql = "SELECT name,next_visit FROM domain WHERE name='".$url_part['host']."' AND next_visit < NOW();";
-            $r = $this->db->fetchAssoc($sql);
-            //echo $sql;
-            //echo "<b>TIMESUP!!!</b>";
-            //var_dump($r);
-            if(empty($r)) {
-                echo "&nbsp;<b><small>NOT YET</small></b><br />"; // continue to next url
-                continue;
-                }*/
 
             $this->updateNextVisit($url['url']);
 
@@ -151,17 +150,14 @@ class Crawler implements \Plugin {
                 //var_dump($response);
                 // fetch urls from response
                 $dl_length = strlen($response);
-                echo "<br />Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
+                echo " - Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
                 $dl_total += $dl_length;
                 $uid = uniqid();
 
                 $fn = $url_part['host'].$url_part['path'];
                 $dn = dirname($fn);
                 $bn = basename($fn);
-//                var_dump($dn);
-//                var_dump($bn);
                 $this->rmkdir("files/".$dn);
-                echo basename($fn)."<br />";
                 file_put_contents("files/".$dn."/".$bn.".".$uid, $response);
 
 //                $this->updateNextVisit($url['url']);
@@ -175,7 +171,7 @@ class Crawler implements \Plugin {
 //                echo var_export($contenttype, TRUE)." : ";
                 $content = $this->downloadUrl($url['url']);
                 $dl_length = strlen($content);
-                echo "<br />Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
+                echo " - Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
                 $dl_total += $dl_length;
 
                 $finfo = new \finfo(FILEINFO_MIME);
@@ -212,7 +208,7 @@ class Crawler implements \Plugin {
             $q->execute();
             $this->showStatus();
         }
-        echo "<p>Downloaded : <b>".$this->format_size($dl_total)."</b> bytes.</p>";
+        echo "<p>Totally downloaded : <b>".$this->format_size($dl_total)."</b>.</p>";
         echo "</body></html>";
     }
 
@@ -295,6 +291,13 @@ class Crawler implements \Plugin {
                                    "' AND domain_id=".$tmp['host'].
                                    " AND scheme_id=".$tmp['scheme'].
                                    ";");
+        if(count($r)) {
+            return $r[0]['id'];
+        }
+        else
+        {
+            return NULL;
+        }
     }
 
     private function updateNextVisit($domainName, $seconds = 600) {
@@ -340,6 +343,7 @@ class Crawler implements \Plugin {
             $q->execute(array(':domain'=>$domain));
             $sql = "SELECT id,name FROM domain WHERE name like '$domain';";
             $r = $this->db->fetchAssoc($sql);
+//            var_dump($r);
             return $r[0]['id'];
 //            throw new Exception("Domain dont exitst.... creating... try again");
         }
@@ -375,7 +379,7 @@ class Crawler implements \Plugin {
             $path .= DIRECTORY_SEPARATOR . $dirs[$i];
             if (!is_dir($path)) {
                 echo "Creating dir : ";
-                var_dump($path);
+//                var_dump($path);
                 if(!mkdir($path, $mode)) {
                     return false;
                 }
