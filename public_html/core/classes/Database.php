@@ -7,7 +7,7 @@ require_once ROOT.'/../../conf.php';
 
 class Database {
 
-    public static $db = null;
+    public $db = null;
 
     protected static $_instance = null;
     public function __construct()
