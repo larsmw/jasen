@@ -88,6 +88,7 @@ class Crawler implements \Plugin {
      * Do the run...
      */
     private function doRun($numUrls = 10) {
+        ob_start();
         echo "<html><head>";
         echo "<meta http-equiv=\"refresh\" content=\"5\">";
         echo "</head><body>";
@@ -100,7 +101,7 @@ class Crawler implements \Plugin {
         // For each url that should be crawled
         foreach($urls as $url) {
             echo "Crawling : " . $this->limit_text($url['url'], 70)."";
-
+            ob_flush();
 // url might not have id
 //            $url_id = $this->getUrlID($url['url']);
             

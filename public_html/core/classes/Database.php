@@ -13,7 +13,7 @@ class Database {
     public function __construct()
     {
         global $databases;
-//        var_dump($databases);
+        var_dump($databases);
         //Thou shalt not construct that which is unconstructable!
         $this->db = new PDO("mysql:host=".$databases['default']['host'].";dbname=".$databases['default']['db']."", $databases['default']['user'], $databases['default']['password']);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
