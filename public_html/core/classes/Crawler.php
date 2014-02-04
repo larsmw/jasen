@@ -52,7 +52,10 @@ class Crawler implements \Plugin {
      * Starts a run of the crawler.
      */
     public function run() {
-        $this->doRun(20);
+
+        if($_GET['q'] === 'crawl' ) {
+            $this->doRun(20);
+        }
 
 
 /*        $pid = pcntl_fork(); // fork
