@@ -276,6 +276,9 @@ class Crawler implements \Plugin {
             }
 
             foreach($links as $link) {
+                if(empty($url_part['host']) || (filter_var($url['url'], FILTER_VALIDATE_URL) == false)) {
+                    continue;
+                }
                 $tmp = parse_url($link);
                 if(empty($tmp['host'])) $tmp['host'] = $base['host'];
                 if(empty($tmp['scheme'])) $tmp['scheme'] = $base['scheme'];
@@ -337,7 +340,7 @@ class Crawler implements \Plugin {
         $q->execute(array(':id'=>$dID, ':sec'=>$seconds));
     }
 
-    private function addCrawlerQueue($url, $domain_id = 0) { return TRUE;
+    private function addCrawlerQueue($url, $domain_id = 0) {
         $r = $this->db->fetchAssoc("SELECT id FROM crawl_queue WHERE url='".$url."';");
         if(count($r)) {
             $sql = "INSERT INTO crawl_queue (url, added, domain_id) VALUES (:url, NOW(), :domid)";
