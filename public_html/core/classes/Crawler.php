@@ -54,7 +54,7 @@ class Crawler implements \Plugin {
     public function run() {
 
         if($_GET['q'] === 'crawl' ) {
-            $this->doRun(20);
+            $this->doRun(2);
         }
 
 
@@ -93,7 +93,7 @@ class Crawler implements \Plugin {
     private function doRun($numUrls = 10) {
         ob_start();
         echo "<html><head>";
-        echo "<meta http-equiv=\"refresh\" content=\"5\">";
+        echo "<meta http-equiv=\"refresh\" content=\"10\">";
         echo "</head><body>";
         echo date(DATE_ATOM)."<br />\n";
 
@@ -337,7 +337,7 @@ class Crawler implements \Plugin {
         $q->execute(array(':id'=>$dID, ':sec'=>$seconds));
     }
 
-    private function addCrawlerQueue($url, $domain_id = 0) {
+    private function addCrawlerQueue($url, $domain_id = 0) { return TRUE;
         $r = $this->db->fetchAssoc("SELECT id FROM crawl_queue WHERE url='".$url."';");
         if(count($r)) {
             $sql = "INSERT INTO crawl_queue (url, added, domain_id) VALUES (:url, NOW(), :domid)";
