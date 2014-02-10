@@ -177,13 +177,12 @@ class Crawler implements \Plugin {
                 $dl_length = strlen($response);
                 echo " - Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
                 $dl_total += $dl_length;
-                $uid = uniqid();
 
                 $fn = $url_part['host'].$url_part['path'];
                 $dn = dirname($fn);
                 $bn = basename($fn);
                 $this->rmkdir("files/".$dn);
-                file_put_contents("files/".$dn."/".$bn.".".$uid, $response);
+                file_put_contents("files/".$dn."/".$bn, $response);
 
 //                $this->updateNextVisit($url['url']);
                 // Gets links from the page and formats them to a full valid url:
@@ -276,6 +275,7 @@ class Crawler implements \Plugin {
             }
 
             foreach($links as $link) {
+                // Dont add invalid urls
                 if(empty($url_part['host']) || (filter_var($url['url'], FILTER_VALIDATE_URL) == false)) {
                     continue;
                 }
