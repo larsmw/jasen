@@ -17,21 +17,19 @@ class Crawler implements \Plugin {
 
     public function __construct()
     {
-        
-        date_default_timezone_set("Europe/Copenhagen");
-	self::$db = new \Database();
-        $this->msgStack = new \SplStack();
+      date_default_timezone_set("Europe/Copenhagen");
+      self::$db = new \Database();
+      $this->msgStack = new \SplStack();
     }
 
     protected function __clone()
     {
-        //Me not like clones! Me smash clones!
+      //Me not like clones! Me smash clones!
     }
 
     public static function getInstance()
     {
         global $databases;
-//        var_dump($databases);
         if (is_null(self::$_instance)) {
             self::$_instance = new self();
             self::$db = \Database::getInstance();
