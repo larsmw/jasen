@@ -17,9 +17,9 @@ class Crawler implements \Plugin {
 
     public function __construct()
     {
-        //Thou shalt not construct that which is unconstructable!
+        
         date_default_timezone_set("Europe/Copenhagen");
-        $this->db = new \Database();
+	self::$db = new \Database();
         $this->msgStack = new \SplStack();
     }
 
