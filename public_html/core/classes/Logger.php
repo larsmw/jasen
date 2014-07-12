@@ -5,12 +5,14 @@
  * and open the template in the editor.
  */
 
+require_once ROOT.'/core/classes/Interfaces.php';
+
 /**
  * Description of Logger
  *
  * @author lars
  */
-class Logger {
+class Logger implements interfaces\IWebObject {
 
     // Name of the file where the message logs will be appended.
     private $LOGFILENAME;
@@ -33,6 +35,10 @@ class Logger {
 
     public function __construct($logfilename = '../logs/app.log', $separator = ',') {
 
+    }
+    
+    public function run( $sender, $args ) {
+        
     }
 
     // Private method that will write the text logs into the $LOGFILENAME.

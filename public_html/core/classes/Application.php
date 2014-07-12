@@ -14,8 +14,7 @@ require_once ROOT.'/core/classes/Database.php';
  */
 class Application extends Base implements \interfaces\IWebApplication {
 
-  private $_menus = array();
-  private $_runObjects = array();  
+  private $_plugins = array();  
 
   protected $db;
   /**
@@ -23,10 +22,24 @@ class Application extends Base implements \interfaces\IWebApplication {
    */
   public function __construct() {
     parent::__construct();
+
+    foreach ($this->getImplementingClasses("interfaces\IWebObject") as $plugin ) {
+        $this->_plugins[] = new $plugin;
+    }
+
     $this->db = \Database::getInstance();
-    $this->addRun(new User());
-    $this->onRun();
+    
+    $this->run();
     //$this->showDBStats();
+  }
+  
+  private function getImplementingClasses( $interfaceName ) {
+    return array_filter(
+        get_declared_classes(),
+        function( $className ) use ( $interfaceName ) {
+            return in_array( $interfaceName, class_implements( $className ) );
+        }
+    );
   }
   
   public function addRun( $observer )
@@ -34,15 +47,10 @@ class Application extends Base implements \interfaces\IWebApplication {
     $this->_runObjects[] = $observer;
   }
 
-  public function addMenu( $menu )
+  public function run( )
   {
-    $this->_menus[] = $menu;
-  }
-
-  public function onRun( )
-  {
-    foreach( $this->_runObjects as $obs )
-      $obs->onRun( $this, "some parameter" );
+    foreach( $this->_plugins as $obs )
+      $obs->run( $this, "some parameter" );
   }
 
 
@@ -104,7 +112,9 @@ class Application extends Base implements \interfaces\IWebApplication {
    * Show some statistics and close down nicely
    */
   public function __destruct() {
-    echo "Peak mem : ".(memory_get_peak_usage(TRUE)/1024)."kb";
+    echo "<div class=\"xdebug-report\">";
+    echo "Peak mem : ".(xdebug_peak_memory_usage()/1024)."kb";
+    echo "Running time : ".(xdebug_time_index())."</div>";
     //var_dump(parent);
     parent::__destruct();
   }

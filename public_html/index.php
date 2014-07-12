@@ -176,6 +176,10 @@ class myApp extends \App\Application {
 
 }
 
-$m = new myApp();
-
+try {
+    $m = new myApp();
+}
+catch (Exception $e) {
+    var_dump($e);
+ }
 

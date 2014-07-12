@@ -24,7 +24,7 @@ class Crawler extends \interfaces\Singleton {
      * Denne funktion skal flyttes ud at crawleren.
      */
     public function getReport() {
-        $r = $this->db->fetchAssoc("SELECT count(*) as num FROM urls;");
+        $r = $this->db->fetchAssoc("SELECT count(*) as num FROM url;");
         $s = "<h3>Stats</h3>";
         $s .= "Links : ".$r[0]['num']."<br />";
         $r = $this->db->fetchAssoc("SELECT count(*) as num FROM domain;");
