@@ -36,25 +36,32 @@ class Crawler extends \interfaces\Singleton {
      * Starts a run of the crawler.
      */
     public function run() {
-        $this->doRun();
-        die();
-        
-        $pid = pcntl_fork(); // fork
+        //$this->doRun();
+        //die();
+
+        $pid = \pcntl_fork(); // fork
+        var_dump($pid);
         if ($pid < 0)
             exit;
         else if ($pid) // parent
             exit;
         else { // child
+            echo "running";
             $sid = posix_setsid();
             
             if ($sid < 0)
                 exit;
-            
-            $this->doRun();
+            var_dump($sid);
+            $this->bgRun();
         }
 
         header('Location: /');
     }
+
+    private function bgRun() {
+        syslog(LOG_NOTICE, "Starting background...");
+    }
+
 
     private function downloadUrl($url) {
         $ch = curl_init();
@@ -73,29 +80,29 @@ class Crawler extends \interfaces\Singleton {
      * Do the run...
      */
     private function doRun($numUrls = 10) {
+        srand(floor(time() / (60*60*24)));
         echo "<html><head>";
-        echo "<meta http-equiv=\"refresh\" content=\"2\">";
+        echo "<meta http-equiv=\"refresh\" content=\"15\">";
         echo "</head><body>";
         echo date(DATE_ATOM)."<br />\n";
-        $sql = "SELECT * FROM crawl_queue order by added asc limit ".$numUrls.";";
+        //$sql = "SELECT count(*) as cnt FROM crawl_queue;";
+        //$count_urls = $this->db->fetchAssoc($sql);
+        //echo "Queue size : " . $count_urls[0]['cnt'] . "<br />";
+
+        $sql = "SELECT * FROM crawl_queue group by domain_id order by added asc limit ".$numUrls.";";// OFFSET ".rand(0,50).";";
+        //var_dump($sql);
         $urls = $this->db->fetchAssoc($sql);
         // For each url that should be crawled
         foreach($urls as $url) {
             try {
-//            echo $url['url']."<br />";
+                echo "Crawling : " . $url['url'] . " <br />";
                 $url_part = parse_url($url['url']);
                 //var_dump($url_part);
+                $domain_id = $this->getDomainID($url_part['host']);
+                //var_dump($domain_id);
                 if(empty($url_part['host'])) {
-//                echo "<b>Invalid url</b><br />";
-                    // remove url from crawl_queue
-                    /*$sql = "DELETE FROM crawl_queue WHERE id = :cid;";
-                      $q = $this->db->db->prepare($sql);
-                      $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
-                      $q->execute();*/
                     $this->dequeue($url['id']);
-                    
-                    throw new Exception("Invalid url");
-                    
+                    throw new \Exception("Invalid url");
                     continue;
                 }
                 // check if time is up for next visit...
@@ -105,7 +112,7 @@ class Crawler extends \interfaces\Singleton {
                 //echo "<b>TIMESUP!!!</b>";
                 //var_dump($r);
                 if(empty($r)) {
-                    echo "<b><small>NOT YET</small></b><br />"; // continue to next url
+                    echo "<b><small>" . $url_part['host'] . " : NOT YET</small></b><br />"; // continue to next url
                     //throw new Exception("Crawling too early");
                     continue;
                 }
@@ -119,37 +126,44 @@ class Crawler extends \interfaces\Singleton {
 //                echo "Blocked by robots<br />";
                     // remove url from crawl_queue
                     $this->dequeue($url['id']);
-                    throw new Exception("Url Blocked by Robots.tst");
+                    echo "Url Blocked by Robots.txt : " . $url['url'] . "<br />";
                     continue;
                 }
-                
-                $contenttype = get_headers($url['url'],1)['Content-Type'];
-//            var_dump($contenttype);
-                if($contenttype[0] === "text/html") {
-                    var_dump(get_headers($url['url'],1)[0]);
-                    $response = $this->downloadUrl($url['url']);
+                $headers = get_headers($url['url'],1);
+                //var_dump($headers[0]);
+                //var_dump($headers);
+                if(isset($headers['Content-Type'])) {
+                    $contenttype = $headers['Content-Type'];
+                } else {
+                    $contenttype = (string)"";
+                }
+
+                // contenttype might be an array!!
+                if(strpos((string)$contenttype, "text/html") && 
+                        ($headers[0] == "HTTP/1.1 200 OK" || $headers[0] == "HTTP/1.0 200 OK") ) {
+                    $content = $this->downloadUrl($url['url']);
                     //var_dump($response);
                     // fetch urls from response
 //                echo "Downloaded ".strlen($response)." bytes.<br />";
                     
-                    $fn = $url_part['host'].$url_part['path'];
-                    $dn = dirname($fn);
-                    $bn = basename($fn);
+                    $fn = $url_part['host'].(isset($url_part['path'])?$url_part['path']:"");
+                    $dn = $domain_id;
+                    $bn = md5($fn);
                     $q = (isset($url_part['query']))?$url_part['query']:'';
 //                var_dump($dn);
 //                var_dump($bn);
                     $this->rmkdir("files/".$dn);
 //                echo basename($fn)."<br />";
-                    file_put_contents("files/".$dn."/".$bn."".urlencode($q), $response);
+                    file_put_contents("files/".$dn."/".$bn."".urlencode($q), $content);
                     
-                    $this->updateNextVisit($url['url']);
+                    $this->updateNextVisit($url_part['host']);
                     // Gets links from the page and formats them to a full valid url:
 //                echo "urls in page : ";
-                    $urls = $this->pageLinks($response, $url['url'], true);
+                    $urls = $this->pageLinks($content, $url['url'], true);
 //                var_dump($urls);
                     //echo count($links);
                 }
-                else {
+                else if($headers[0] == "HTTP/1.1 200 OK" || $headers[0] == "HTTP/1.0 200 OK") {
                     echo var_export($contenttype, TRUE)." : ";
                     $content = $this->downloadUrl($url['url']);
                     
@@ -163,17 +177,22 @@ class Crawler extends \interfaces\Singleton {
                         continue;
                     }
                     
-                    $fn = $url_part['host'].$url_part['path'];
-                    $dn = dirname($fn);
-                    $bn = basename($fn);
-                    var_dump($bn);
+                    $fn = $url_part['host'].(isset($url_part['path'])?$url_part['path']:"");
+                    $dn = $domain_id;
+                    $bn = md5($fn);
+                    //var_dump($bn);
                     $this->rmkdir("files/".$dn);
-                    echo basename($fn)."<br />";
+                    //echo "Basename : " . $bn . "<br />";
                     file_put_contents("files/".$dn."/".$bn, $content);
+                    $this->updateNextVisit($url_part['host']);
+                    $this->pageLinks($content, $url['url'], true);
                     // remove url from crawl_queue
-                    var_dump($url['id']);
+                    //var_dump($url['id']);
                     
                     $this->dequeue($url['id']);
+                }
+                else {
+                    //var_dump($headers);
                 }
                 
                 // remove url from crawl_queue
@@ -188,15 +207,16 @@ class Crawler extends \interfaces\Singleton {
 
     // $html        = the html on the page
 // $current_url = the full url that the html came from (only needed for $repath)
-// $repath      = converts ../ and / and // urls to full valid urls
-    function pageLinks($html, $current_url = "", $repath = false){
+// $relative_path      = converts ../ and / and // urls to full valid urls
+    function pageLinks($html, $current_url = "", $relative_path = false){
         preg_match_all("/\<a.+?href=(\"|')(?!javascript:|#)(.+?)(\"|')/i", $html, $matches);
         $links = array();
         $ret = array();
+        //var_dump($matches);
         if(isset($matches[2])){
             $links = $matches[2];
         }
-        if($repath && count($links) > 0 && strlen($current_url) > 0){
+        if($relative_path && count($links) > 0 && strlen($current_url) > 0){
             $pathi      = pathinfo($current_url);
             $dir        = $pathi["dirname"];
             $base       = parse_url($current_url);
@@ -228,19 +248,20 @@ class Crawler extends \interfaces\Singleton {
                 $tmp = parse_url($link);
                 if(empty($tmp['host'])) $tmp['host'] = $base['host'];
                 if(empty($tmp['scheme'])) $tmp['scheme'] = $base['scheme'];
-//                var_dump($link);
+                //var_dump($link);
                 $tmp['scheme'] = $this->getSchemeID($tmp['scheme']);
                 $tmp['host'] = $this->getDomainID($tmp['host']);
                 if(!isset($tmp['path'])) $tmp['path'] = '/';
                 $ret[] = $tmp;
                 $this->addCrawlerQueue($link, $tmp['host']);
-
-                $r = $this->db->fetchAssoc("SELECT count(*) as num FROM urls WHERE url='".$tmp['path'].
-                                           "' AND domain_id=".$tmp['host'].
-                                           " AND scheme_id=".$tmp['scheme'].
-                                           ";");
+                $sql = "SELECT count(*) as num FROM url WHERE url='".$tmp['path'].
+                                           "' AND domain_id='".$tmp['host'].
+                                           "' AND scheme_id='".$tmp['scheme'].
+                                           "';";
+                //var_dump($sql);
+                $r = $this->db->fetchAssoc($sql);
                 if($r[0]['num'] < 1) {
-                    $sql = "INSERT INTO urls (url,domain_id,scheme_id) VALUES (:url,:host,:scheme)";
+                    $sql = "INSERT INTO url (url,domain_id,scheme_id) VALUES (:url,:host,:scheme)";
                     $q = $this->db->db->prepare($sql);
                     $q->execute(array(':url'=>$tmp['path'],
                                       ':host'=>$tmp['host'],
@@ -248,7 +269,7 @@ class Crawler extends \interfaces\Singleton {
                 }
             }
         }
-//        var_dump($ret);
+        //var_dump($ret);
         return $ret;
     }
 
@@ -268,16 +289,19 @@ class Crawler extends \interfaces\Singleton {
     }
 
     private function updateNextVisit($domainName, $seconds = 5) {
-        $dID = $this->getDomainID(parse_url($domainName)['host']);
+        $dID = $this->getDomainID($domainName);
         $sql = "UPDATE domain SET next_visit=DATE_ADD(NOW(), INTERVAL :sec SECOND) WHERE id=:id;";
         $q = $this->db->db->prepare($sql);
         $q->execute(array(':id'=>$dID, ':sec'=>$seconds));
     }
 
     private function addCrawlerQueue($url, $domain_id = 0) {
-        $sql = "INSERT INTO crawl_queue (url, added, domain_id) VALUES (:url, NOW(), :domid)";
-        $q = $this->db->db->prepare($sql);
-        $q->execute(array(':url'=>$url, ':domid'=>$domain_id));
+        $r = $this->db->fetchAssoc("SELECT count(*) as num FROM crawl_queue WHERE url='" . $url . "';");
+        if($r[0]['num'] < 1) {
+            $sql = "INSERT INTO crawl_queue (url, added, domain_id) VALUES (:url, NOW(), :domid)";
+            $q = $this->db->db->prepare($sql);
+            $q->execute(array(':url'=>$url, ':domid'=>$domain_id));
+        }
     }
 
     private function dequeue($url_id) {
@@ -289,8 +313,8 @@ class Crawler extends \interfaces\Singleton {
     }
 
     private function getSchemeID($scheme) {
-        if($scheme === 'http') return 0;
-        if($scheme === 'https') return 1;
+        if ($scheme === 'http') { return 0; }
+        if ($scheme === 'https') { return 1; }
         var_dump($scheme);
         $sql = "SELECT id,name FROM protocols WHERE 'name' = '$scheme';";
         $r = $this->db->fetchAssoc($sql);
@@ -306,14 +330,15 @@ class Crawler extends \interfaces\Singleton {
     }
 
     private function getDomainID($domain) {
-        $sql = "SELECT id,name FROM domain WHERE name like '%$domain%';";
+        $sql = "SELECT id,name FROM domain WHERE name like '$domain';";
         $r = $this->db->fetchAssoc($sql);
         if(count($r)===0) {
-            $sql = "INSERT INTO domain (name) VALUES (:domain)";
+            $sql = "INSERT INTO domain (name, next_visit) VALUES (:domain, NOW())";
             $q = $this->db->db->prepare($sql);
             $q->execute(array(':domain'=>$domain));
-            $sql = "SELECT id,name FROM domain WHERE name like '%$domain%';";
+            $sql = "SELECT id,name FROM domain WHERE name like '$domain';";
             $r = $this->db->fetchAssoc($sql);
+            var_dump($r);
             return $r[0]['id'];
 //            throw new Exception("Domain dont exitst.... creating... try again");
         }
@@ -341,12 +366,13 @@ class Crawler extends \interfaces\Singleton {
     }
 
     private function rmkdir($path, $mode = 0777) {
-        echo "Making dirs<br />\n";
+//        echo "Making dirs<br />\n";
         $dirs = explode(DIRECTORY_SEPARATOR , $path);
-//        var_dump($dirs);
+        //var_dump($dirs);
+        //var_dump(dirname($_SERVER['PHP_SELF']));
         $count = count($dirs);
         $path = '.';
-        for ($i = 0; $i < $count; ++$i) {
+        for ($i = 0; $i < $count; $i++) {
             $path .= DIRECTORY_SEPARATOR . $dirs[$i];
             if (!is_dir($path)) {
                 var_dump($path);
