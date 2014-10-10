@@ -96,7 +96,7 @@ class Crawler implements \Plugin {
 
         $sql = "SELECT id FROM `domain` WHERE next_visit<NOW() order by next_visit ASC limit 20;";
         $ids = $this->db->fetchAssoc($sql);
-//        var_dump($ids);
+        var_dump($ids);
         foreach($ids as $id) {
             $db_ids[] = intval($id['id']);
         }
@@ -114,7 +114,7 @@ class Crawler implements \Plugin {
         foreach($db_ids as $db_id) {
             $sql = "SELECT c.id,c.url FROM crawl_queue c WHERE c.domain_id = '".$db_id."' order by c.id ASC limit 1;";
             $url = $this->db->fetchAssoc($sql);
-//            var_dump($url,$sql);
+            var_dump($url,$sql);
             if(!count($url)) {
                 $this->updateNextVisitDomainID($db_id);
                 continue;
