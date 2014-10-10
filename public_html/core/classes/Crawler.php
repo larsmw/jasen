@@ -8,9 +8,7 @@ require_once "Interfaces.php";
 
 class Crawler implements \Plugin {
 
-    protected static $db;
-
-    protected static $_instance = null;
+    protected $db;
 
     private static $std_crawldelay = 600;
     private $msgStack;
@@ -18,7 +16,7 @@ class Crawler implements \Plugin {
     public function __construct()
     {
       date_default_timezone_set("Europe/Copenhagen");
-      self::$db = new \Database();
+      $this->db = new \Database();
       $this->msgStack = new \SplStack();
     }
 
@@ -27,7 +25,7 @@ class Crawler implements \Plugin {
       //Me not like clones! Me smash clones!
     }
 
-    public static function getInstance()
+    /*    public static function getInstance()
     {
         global $databases;
         if (is_null(self::$_instance)) {
@@ -35,7 +33,7 @@ class Crawler implements \Plugin {
             self::$db = \Database::getInstance();
         }
         return self::$_instance;
-    }
+	}*/
 
     public function getReport() {
         $r = $this->db->fetchAssoc("SELECT count(*) as num FROM urls;");
