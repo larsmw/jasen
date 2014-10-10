@@ -52,7 +52,7 @@ class Core {
     }
 }
 
-class App implements Plugin {
+/*class App implements Plugin {
     private $config;
 
     public function init() {
@@ -63,7 +63,7 @@ class App implements Plugin {
 //        var_dump($this->config);
         echo "App starting...";
     }
-}
+    }*/
 
 class MyPlugin implements Plugin {
     public function run() {
