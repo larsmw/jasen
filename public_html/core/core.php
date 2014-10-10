@@ -71,8 +71,7 @@ class MyPlugin implements Plugin {
     }
 }
 
-$c = new Core();
 
-echo xdebug_memory_usage()." bytes memory<br />";
-echo xdebug_time_index()." seconds";
-die("Core ended");
+
+//echo xdebug_memory_usage()." bytes memory<br />";
+//echo xdebug_time_index()." seconds";
