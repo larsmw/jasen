@@ -67,7 +67,7 @@ class App implements Plugin {
 
 class MyPlugin implements Plugin {
     public function run() {
-        echo "Running...<br >/";
+        echo "Running...<br />";
     }
 }
 
