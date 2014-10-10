@@ -94,7 +94,7 @@ class Crawler implements \Plugin {
         echo "</head><body>";
         echo date(DATE_ATOM)."<br />\n";
 
-        $sql = "SELECT id FROM `domain` WHERE next_visit<NOW() order by next_visit ASC limit 20;";
+        $sql = "SELECT id FROM `domain` WHERE next_visit<NOW() order by next_visit ASC limit 200;";
         $ids = $this->db->fetchAssoc($sql);
         var_dump($ids);
         foreach($ids as $id) {
