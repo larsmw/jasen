@@ -30,7 +30,7 @@ class Database {
 //        var_dump($databases);
         if (is_null(self::$_instance)) {
             self::$_instance = new self();
-            self::$db = new PDO('mysql:host=localhost;dbname=se_links', 'root', 'was87Bki');
+            self::$db = new PDO("mysql:host=".$databases['default']['host'].";dbname=".$databases['default']['db']."", $databases['default']['user'], $databases['default']['password']);
             self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
         return self::$_instance;
