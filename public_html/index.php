@@ -182,7 +182,7 @@ class test extends \Application {
       else {
           $login_form = "Velkommen ".$_COOKIE['myusername']."!";
       }
-      $crawler = Crawler\Crawler::getInstance();
+      //$crawler = Crawler\Crawler::getInstance();
       $template = str_replace("{%region:mainmenu}", $this->menu(), $template);
       $template = str_replace("{%login-form}", $login_form, $template);
       //$template = str_replace("{%url-report}", $crawler->getReport(), $template);
@@ -197,7 +197,8 @@ class test extends \Application {
 
 }
 
-$t = new test();
+//$t = new test();
 
+$c = new Core();
 
 ?>
