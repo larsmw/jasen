@@ -22,8 +22,8 @@ Routing ideas
 ini_set('display_errors', 'TRUE');
 ini_set('html_errors', 'TRUE');
 ini_set('log_errors', 'TRUE');
-//xdebug_enable();
-//xdebug_start_code_coverage();
+xdebug_enable();
+xdebug_start_code_coverage();
 
 header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
