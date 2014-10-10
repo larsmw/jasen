@@ -37,6 +37,21 @@ require_once 'core/classes/Application.php';
 require_once 'core/classes/Crawler.php';
 require_once 'core/classes/Pager.php';
 
+
+class App implements Plugin {
+    private $config;
+
+    public function init() {
+        $this->config = new Config();
+    }
+
+    public function run() {
+//        var_dump($this->config);
+        echo "App 1 starting...";
+    }
+}
+
+
 // namespaces
 use App,Crawler;
 
