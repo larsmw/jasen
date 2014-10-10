@@ -21,7 +21,7 @@ class Application extends Base implements IWebApplication {
    */
   public function __construct() {
     parent::__construct();
-    $this->db = Database::getInstance();
+    $this->db = new Database();
     $this->addRun(new User());
     $this->onRun();
   }
