@@ -9,7 +9,7 @@ class Database {
 
     public $db = null;
 
-    protected static $_instance = null;
+    //protected static $_instance = null;
     public function __construct()
     {
         global $databases;
@@ -24,7 +24,7 @@ class Database {
         //Me not like clones! Me smash clones!
     }
 
-    public static function getInstance()
+    /*    public static function getInstance()
     {
         global $databases;
 //        var_dump($databases);
@@ -34,7 +34,7 @@ class Database {
             self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
         return self::$_instance;
-    }
+	}*/
 
     public function fetchAssoc($sql) {
         $stmt = $this->db->query($sql);
