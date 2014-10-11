@@ -254,7 +254,7 @@ class Crawler implements \Plugin {
             $base       = parse_url($current_url);
             $split_path = explode("/", $dir);
             $url        = "";
-            var_dump($links);
+            //var_dump($links);
             foreach($links as $k => $link){
                 if(preg_match("/^\.\./", $link)){
                     $total = substr_count($link, "../");
