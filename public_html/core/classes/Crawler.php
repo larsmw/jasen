@@ -14,7 +14,7 @@ class Domain {
     $this->db = new \Database();
     $url_parts = parse_url($url);
     var_dump($url_parts);
-    $this->name = $url_parts['host'];
+    $this->name = isset($url_parts['host'])?$url_parts['host']:$url_parts['path'];
   }
 
   public function getID() {
