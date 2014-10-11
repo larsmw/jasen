@@ -21,6 +21,8 @@ class Domain {
 
     if(isset($this->id)) return $this->id;
 
+    if(is_null($this->name)) return NULL;
+
     $sql = "SELECT id,name FROM domain WHERE name like '" . $this->name . "';";
     $r = $this->db->fetchAssoc($sql);
     if(count($r)===0) {
