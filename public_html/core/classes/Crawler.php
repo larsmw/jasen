@@ -122,7 +122,7 @@ class Crawler implements \Plugin {
     private function doRun($numUrls = 10) {
         ob_start();
         echo "<html><head>";
-        echo "<meta http-equiv=\"refresh\" content=\"10\">";
+        echo "<meta http-equiv=\"refresh\" content=\"5\">";
         echo "</head><body>";
         echo date(DATE_ATOM)."<br />\n";
 
@@ -175,6 +175,14 @@ class Crawler implements \Plugin {
             if(!isset($url_part['path'])) $url_part['path'] = "/";
 
             $this->updateNextVisit($url['url']);
+
+	    // delete domain if wrong
+	    if($db_id != $this->getDomainID($url['url'])) {
+                $sql = "DELETE FROM domain WHERE id = :cid;";
+                $q = $this->db->db->prepare($sql);
+                $q->BindParam('cid', $db_id, \PDO::PARAM_INT);
+                $q->execute();
+	    }
 
             try {
                 $robot = new \robotstxt($url_part['scheme']."://".$url_part['host']);
