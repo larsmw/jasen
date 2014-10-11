@@ -13,7 +13,7 @@ class Domain {
   public function __construct($url) {
     $this->db = new \Database();
     $url_parts = parse_url($url);
-    var_dump($url_parts);
+    //var_dump($url_parts);
     $this->name = isset($url_parts['host'])?$url_parts['host']:$url_parts['path'];
   }
 
@@ -150,7 +150,7 @@ class Crawler implements \Plugin {
         foreach($db_ids as $db_id) {
             $sql = "SELECT c.id,c.url FROM crawl_queue c WHERE c.domain_id = '".$db_id."' order by c.id ASC limit 1;";
             $url = $this->db->fetchAssoc($sql);
-            var_dump($url,$sql);
+            //var_dump($url,$sql);
             if(!count($url)) {
 	      // Crawl frontpage
               $url[0]['url'] = "";
@@ -182,10 +182,11 @@ class Crawler implements \Plugin {
 
 	    // delete domain if wrong
 	    if($db_id != $this->getDomainID($url['url'])) {
-                $sql = "DELETE FROM domain WHERE id = :cid;";
-                $q = $this->db->db->prepare($sql);
-                $q->BindParam('cid', $db_id, \PDO::PARAM_INT);
-                $q->execute();
+	      var_dump($db_id);
+	      $sql = "DELETE FROM domain WHERE id = :cid;";
+	      $q = $this->db->db->prepare($sql);
+	      $q->BindParam('cid', $db_id, \PDO::PARAM_INT);
+	      $q->execute();
 	    }
 
             try {
