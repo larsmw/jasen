@@ -37,6 +37,18 @@ require_once 'core/classes/Application.php';
 require_once 'core/classes/Crawler.php';
 require_once 'core/classes/Pager.php';
 
+class Router {
+  private $route;
+
+  public function add($r, callable $c) {
+    $this->route[$r] = $c;
+  }
+
+  public function execute() {
+    $path=isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'/';
+    $this->r[$path]();
+  }
+}
 
 class App implements Plugin {
     private $config;
@@ -93,81 +105,16 @@ class UrlQueue extends Database {
 class test extends \Application {
 
     /**
-     * Call constructor of parent.
+     * Start 
      */
     public function __construct() {
         session_start();
-//        throw new UnknownException();
 
-        if(isset($_GET['q'])){
-            $cmd = $_GET['q'];
-        }
-        else {
-            $cmd = "";
-        }
-        $cmd = explode("/", $cmd);
-        var_dump($cmd);
-        if($cmd[0] === "crawl") {
-            $crawler = Crawler::getInstance();
-            $crawler->run();
-            die();
-        }
-        if($cmd === "addurl") {
-            $url = new UrlQueue('add_url');
-            $url->add($f->get('url'));
-        }
-        if($cmd[0] === "pager") {
-            $p = new Pager();
-            $p->run();
-            die();
-        }
-        parent::__construct();
-        if($cmd === "logout") {
-            unset($_COOKIE['myusername']);
-            session_start();
-            session_unset();
-            session_destroy();
-            header("location:/");
-        }
-        $this->checkFormData();
-        echo $this->parse();
-    }
+	$route = new Router();
+	$router->add('/crawler', [new Crawler, 'doRun']);
+	$router->add('/', 'parse');
 
-    /**
-     * Check if user login details is correct. Set cookies.
-     */
-    private function checkFormData() {
-        $tbl_name = "users"; // Table name
-
-        $count = 0;
-        if (isset($_POST['myusername']) && isset($_POST['mypassword'])) {
-// username and password sent from form
-            $myusername = $_POST['myusername'];
-            $mypassword = $_POST['mypassword'];
-
-// To protect MySQL injection (more detail about MySQL injection)
-            $myusername = stripslashes($myusername);
-            $mypassword = stripslashes($mypassword);
-            $myusername = mysql_real_escape_string($myusername);
-            $mypassword = mysql_real_escape_string($mypassword);
-
-            $sql = "SELECT * FROM $tbl_name WHERE username='$myusername' and password=PASSWORD('$mypassword');";
-            $result = $this->db->fetchAssoc($sql);
-
-// Mysql_num_row is counting table row
-            $count = count($result);
-// If result matched $myusername and $mypassword, table row must be 1 row
-
-            if ($count == 1) {
-
-// Register $myusername, $mypassword and redirect to file "login_success.php"
-                setcookie("myusername", $myusername, time() + 7200);
-                setcookie("mypassword", crypt($mypassword), time() + 7200);
-                header("location:index.php");
-            } else {
-                echo "Wrong Username or Password";
-            }
-        }
+	$router->execute();
     }
 
     /**
