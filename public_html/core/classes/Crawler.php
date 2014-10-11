@@ -123,7 +123,7 @@ class Crawler implements \Plugin {
 	    $sql = "SELECT name FROM domain WHERE id=$db_id;";
 	    $r = $this->db->fetchAssoc($sql);
             //var_dump($r);
-	    $url['url'] = $r[0]['name']."/".$url['url'];
+	    $url['url'] = "http://".$r[0]['name']."/".$url['url'];
             echo "Crawling : " . $this->limit_text($url['url'], 70)."";
             ob_flush();
 // url might not have id
