@@ -343,8 +343,8 @@ class Crawler implements \Plugin {
     }
 
     private function addCrawlerQueue($url, $domain_id = 0) {
-        $r = $this->db->fetchAssoc("SELECT id FROM crawl_queue WHERE url='".$url."';");
-        if(count($r)) {
+        $r = $this->db->fetchAssoc("SELECT id FROM crawl_queue WHERE url='".$url."' AND domain_id=".$domain_id.";");
+        if(count($r) == 0) {
             $sql = "INSERT INTO crawl_queue (url, added, domain_id) VALUES (:url, NOW(), :domid)";
             $q = $this->db->db->prepare($sql);
             $q->execute(array(':url'=>$url, ':domid'=>$domain_id));
