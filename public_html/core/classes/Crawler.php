@@ -82,7 +82,7 @@ class Crawler implements \Plugin {
     public function run() {
       if(isset($_GET['q'])) {
         if($_GET['q'] === 'crawl' ) {
-            $this->doRun(2);
+            $this->doRun();
         }
       }
 
@@ -356,7 +356,7 @@ class Crawler implements \Plugin {
 
     private function updateNextVisit($domainName, $seconds = 30) {
         $dID = $this->getDomainID(parse_url($domainName)['host']);
-//        var_dump($dID);
+        var_dump($dID);
         $this->updateNextVisitDomainID($dID, $seconds);
     }
 
