@@ -13,6 +13,7 @@ class Domain {
   public function __construct($url) {
     $this->db = new \Database();
     $url_parts = parse_url($url);
+    var_dump($url_parts);
     $this->name = $url_parts['host'];
   }
 
