@@ -168,7 +168,7 @@ class Crawler implements \Plugin {
             }
 
 	    $headers = get_headers($url['url'],1);
-	    var_dump($headers);
+	    //var_dump($headers);
             $contenttype = $headers['Content-Type'];
 //            var_dump($contenttype);
             if($contenttype === "text/html") {
