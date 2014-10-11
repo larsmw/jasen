@@ -12,7 +12,8 @@ class Domain {
 
   public function __construct($url) {
     $this->db = new \Database();
-    $this->name = $url;
+    $url_parts = parse_url($url);
+    $this->name = $url_parts['host'];
   }
 
   public function getID() {
