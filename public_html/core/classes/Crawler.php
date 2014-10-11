@@ -146,7 +146,7 @@ class Crawler implements \Plugin {
         foreach($db_ids as $db_id) {
             $sql = "SELECT c.id,c.url FROM crawl_queue c WHERE c.domain_id = '".$db_id."' order by c.id ASC limit 1;";
             $url = $this->db->fetchAssoc($sql);
-            //var_dump($url,$sql);
+            var_dump($url,$sql);
             if(!count($url)) {
                 $this->updateNextVisitDomainID($db_id);
                 continue;
