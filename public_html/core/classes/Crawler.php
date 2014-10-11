@@ -153,12 +153,12 @@ class Crawler implements \Plugin {
             var_dump($url,$sql);
             if(!count($url)) {
 	      // Crawl frontpage
-              $url[0] = "";
+              $url[0]['url'] = "";
             }
             $url = $url[0];
 	    $sql = "SELECT name FROM domain WHERE id=$db_id;";
 	    $r = $this->db->fetchAssoc($sql);
-            var_dump($r,$url);
+            //var_dump($r,$url);
 	    $url['url'] = "http://".$r[0]['name']."/".$url['url'];
             echo "Crawling : " . $this->limit_text($url['url'], 70)."";
             ob_flush();
