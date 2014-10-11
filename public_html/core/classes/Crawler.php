@@ -369,7 +369,7 @@ class Crawler implements \Plugin {
 
     private function updateNextVisit($domainName, $seconds = 30) {
         $dID = $this->getDomainID(parse_url($domainName)['host']);
-        var_dump($dID);
+        //var_dump($dID);
         $this->updateNextVisitDomainID($dID, $seconds);
     }
 
