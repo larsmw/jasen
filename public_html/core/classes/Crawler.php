@@ -6,6 +6,38 @@ require_once "Database.php";
 require_once "Robots.php";
 require_once "Interfaces.php";
 
+class Domain {
+  private $name,$id;
+  protected $db;
+
+  public function __construct($url) {
+    $this->db = new \Database();
+    $this->name = $url;
+  }
+
+  public function getID() {
+
+    if(isset($this->id)) return $this->id;
+
+    $sql = "SELECT id,name FROM domain WHERE name like '" . $this->name . "';";
+    $r = $this->db->fetchAssoc($sql);
+    if(count($r)===0) {
+      $sql = "INSERT INTO domain (name) VALUES (:domain)";
+      $q = $this->db->db->prepare($sql);
+      $q->execute(array(':domain'=>$this->name));
+      $sql = "SELECT id,name FROM domain WHERE name like '" . $this->name . "';";
+      $r = $this->db->fetchAssoc($sql);
+      //            var_dump($r);
+      $this->id = $r[0]['id'];
+      return $this->id;
+      //            throw new Exception("Domain dont exitst.... creating... try again");
+    }
+    else {
+      return $r[0]['id'];
+    }
+  }
+}
+
 class Crawler implements \Plugin {
 
     protected $db;
@@ -369,7 +401,10 @@ class Crawler implements \Plugin {
     }
 
     private function getDomainID($domain) {
-        $sql = "SELECT id,name FROM domain WHERE name like '$domain';";
+      $d = new Domain($domain);
+      return $d->getID();
+
+      /*        $sql = "SELECT id,name FROM domain WHERE name like '$domain';";
         $r = $this->db->fetchAssoc($sql);
         if(count($r)===0) {
             $sql = "INSERT INTO domain (name) VALUES (:domain)";
@@ -383,7 +418,7 @@ class Crawler implements \Plugin {
         }
         else {
             return $r[0]['id'];
-        }
+	    }*/
     }
 
     private function getCTID($ct) {
