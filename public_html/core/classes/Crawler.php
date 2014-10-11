@@ -148,8 +148,8 @@ class Crawler implements \Plugin {
             $url = $this->db->fetchAssoc($sql);
             var_dump($url,$sql);
             if(!count($url)) {
-                $this->updateNextVisitDomainID($db_id);
-                continue;
+	      // Crawl frontpage
+              $url[0] = "";
             }
             $url = $url[0];
 	    $sql = "SELECT name FROM domain WHERE id=$db_id;";
@@ -158,14 +158,6 @@ class Crawler implements \Plugin {
 	    $url['url'] = "http://".$r[0]['name']."/".$url['url'];
             echo "Crawling : " . $this->limit_text($url['url'], 70)."";
             ob_flush();
-// url might not have id
-//            $url_id = $this->getUrlID($url['url']);
-            
-//            var_dump($url_id);
-
-/*            $sql = "INSERT INTO url_visits (url_id) VALUES (:url_id)";
-            $q = $this->db->db->prepare($sql);
-            $q->execute(array(':url_id'=>$url_id));*/
 
             $url_part = parse_url($url['url']);
             //var_dump((filter_var($url['url'], FILTER_VALIDATE_URL)));
