@@ -325,13 +325,13 @@ class Crawler implements \Plugin {
         }
     }
 
-    private function updateNextVisit($domainName, $seconds = 600) {
+    private function updateNextVisit($domainName, $seconds = 7200) {
         $dID = $this->getDomainID(parse_url($domainName)['host']);
 //        var_dump($dID);
         $this->updateNextVisitDomainID($dID, $seconds);
     }
 
-    private function updateNextVisitDomainID($dID, $seconds = 600) {
+    private function updateNextVisitDomainID($dID, $seconds = 7200) {
         $sql = "UPDATE domain SET next_visit=DATE_ADD(NOW(), INTERVAL :sec SECOND) WHERE id=:id;";
         $q = $this->db->db->prepare($sql);
         $q->execute(array(':id'=>$dID, ':sec'=>$seconds));
