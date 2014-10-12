@@ -1,18 +1,14 @@
 <?php
 
 require_once ROOT.'/core/classes/Interfaces.php';
-require_once ROOT.'/core/classes/Base.php';
 
+class User implements Plugin {
 
-class User extends Base implements IWebPlugin {
-
-  public function onRun( $sender, $args ) {
-      echo "User object invoked...";
-      var_dump($sender); var_dump($args);
+  public function init() {
+      echo "User object init()...";
   }
 
-  public function onMenu( &$menu ) {
-      echo "onMenu<br />";
-      var_dump($menu);
+  public function run() {
+      echo "User object run...";
   }
 }
