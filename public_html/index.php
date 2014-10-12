@@ -30,6 +30,7 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
 
 define("ROOT", getcwd());
 
+require_once '../libs/vendors/autoload.php';
 require_once 'core/core.php';
 // Death come here...
 
@@ -46,7 +47,8 @@ class App implements Plugin {
 
     public function run() {
 //        var_dump($this->config);
-        echo "App 1 starting...";
+      $smarty = new Smarty();
+      echo "App 1 starting...";
     }
 }
 

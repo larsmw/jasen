@@ -2,7 +2,7 @@
 
 require_once 'Interfaces.php';
 
-require_once ROOT.'/../../conf.php';
+require_once ROOT.'/../conf.php';
 
 
 class Database {
