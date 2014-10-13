@@ -175,12 +175,14 @@ class Crawler implements \Plugin {
             $r = $this->db->fetchAssoc($sql);
             //var_dump($r,$url);
             $url['url'] = "http://".rtrim($r[0]['name'], "//")."/".ltrim($url['url'], "/");
-            echo "Crawling : " . $this->limit_text($url['url'], 70)."";
+            echo "<b>Crawling : </b>" . $this->limit_text($url['url'], 70)."";
             ob_flush();
 
+            $url_o = new Url($url['url']);
+
             $url_part = parse_url($url['url']);
-            //var_dump((filter_var($url['url'], FILTER_VALIDATE_URL)));
-            if(empty($url_part['host']) || (filter_var($url['url'], FILTER_VALIDATE_URL) == false)) {
+            
+            if(!$url_o->valid()) {
                 echo "<b>Invalid url</b><br />";
 
                 // remove url from crawl_queue
@@ -224,13 +226,17 @@ class Crawler implements \Plugin {
             $run = true;
             switch($headers[0]) {
               case 'HTTP/1.1 301 Moved Permanently' :
+              case 'HTTP/1.1 301 MOVED PERMANENTLY' :
               case 'HTTP/1.0 301 Moved Permanently' :
               case 'HTTP/1.0 301 Redirect' :
               case 'HTTP/1.1 301' :
+              case 'HTTP/1.1 301 ' :
               case 'HTTP/1.1 302 Moved Temporarily' :
               case 'HTTP/1.0 302 Moved Temporarily' :
               case 'HTTP/1.0 302 Found':
               case 'HTTP/1.1 302 Found':
+              case 'HTTP/1.1 302 Object moved' :
+              case 'HTTP/1.1 302 Object Moved':
               case 'HTTP/1.1 302 Redirect' :
                 // Moved - follow link
                 echo "&nbsp;<b>" . $headers[0] ."</b>";
@@ -244,6 +250,7 @@ class Crawler implements \Plugin {
                 }
                 echo " -> " . $location . "<br />";
                 $tmp = parse_url($location);
+                $base = parse_url($url['url']);
                 if(empty($tmp['host'])) $tmp['host'] = $base['host'];
                 if(empty($tmp['scheme'])) $tmp['scheme'] = $base['scheme'];
                 $tmp['scheme'] = $this->getSchemeID($tmp['scheme']);
@@ -260,6 +267,8 @@ class Crawler implements \Plugin {
                 break;
               case 'HTTP/1.1 500 Internal Server Error' : 
               case 'HTTP/1.1 400 Bad Request' :
+              case 'HTTP/1.0 403 Forbidden' :
+              case 'HTTP/1.1 403 Forbidden' :
                 // Wrong - remove link
                 $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
                 $q = $this->db->db->prepare($sql);
@@ -269,6 +278,9 @@ class Crawler implements \Plugin {
                 break;
               case 'HTTP/1.0 200 OK' :
               case 'HTTP/1.1 200 OK' :
+              case 'HTTP/1.1 200 OK ' :
+              case 'HTTP/1.1 200 Okay' :
+              case 'HTTP/1.1 200 ' :
                 // All is fine
                 break;
               default:
@@ -285,6 +297,7 @@ class Crawler implements \Plugin {
                 case "text/html;charset=UTF-8" :
                 case "text/html; charset=UTF-8" :
                 case "text/html; charset=ISO-8859-1" :
+                case "text/html; charset=iso-8859-1" :
                 case "text/html;charset=ISO-8859-1" :
                   $response = $this->downloadUrl($url['url']);
                   //var_dump($response);
@@ -300,7 +313,7 @@ class Crawler implements \Plugin {
                 default:
                   //                echo var_export($contenttype, TRUE)." : ";
                   var_dump($contenttype);
-                  $content = $this->downloadUrl($url['url']);
+                  /*                  $content = $this->downloadUrl($url['url']);
                   $dl_length = strlen($content);
                   echo " - 2 Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
                   $dl_total += $dl_length;
@@ -320,7 +333,7 @@ class Crawler implements \Plugin {
                   var_dump($url);
                   //var_dump($content);
                   $urls = $this->pageLinks($content, $url['url'], true);
-                  var_dump(count($urls));
+                  var_dump(count($urls));*/
                   
                   break;
               }
@@ -334,6 +347,8 @@ class Crawler implements \Plugin {
             $this->showStatus();
         }
         echo "<p>Totally downloaded : <b>".$this->format_size($dl_total)."</b>.</p>";
+        echo xdebug_memory_usage()." bytes memory<br />";
+        echo xdebug_time_index()." seconds";
         echo "</body></html>";
     }
 
@@ -451,20 +466,25 @@ class Crawler implements \Plugin {
     }
 
     private function getSchemeID($scheme) {
-        if($scheme === 'http') return 0;
-        if($scheme === 'https') return 1;
-//        var_dump($scheme);
-        $sql = "SELECT id,name FROM protocols WHERE 'name' = '$scheme';";
-        $r = $this->db->fetchAssoc($sql);
-        if( !is_array($r) || count($r)===0 ) {
-            $sql = "INSERT INTO protocols (name) VALUES (:scheme)";
-            $q = $this->db->db->prepare($sql);
-            $q->execute(array(':scheme'=>$scheme));
-            throw new Exception("Scheme dont exitst.... creating... try again");
-        }
-        else {
-            return $r[0]['id'];
-        }
+      //var_dump($scheme);
+      if(is_null($scheme)) return -1;
+      //if($scheme === 'http') return 0;
+      //if($scheme === 'https') return 1;
+      //        var_dump($scheme);
+      $scheme = trim($scheme);
+      $sql = "SELECT id,name FROM protocols WHERE name LIKE '" . $scheme . "';";
+      $r = $this->db->fetchAssoc($sql);
+      //var_dump($r);
+      if( count($r)===0 ) {
+        $sql = "INSERT INTO protocols (name) VALUES (:scheme)";
+        $q = $this->db->db->prepare($sql);
+        $q->execute(array(':scheme'=>$scheme));
+        //throw new Exception("Scheme dont exitst.... creating... try again");
+        return $this->db->db->lastInsertId();
+      }
+      else {
+        return $r[0]['id'];
+      }
     }
 
     private function getDomainID($domain) {

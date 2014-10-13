@@ -21,6 +21,7 @@ class EventDispatcher {
     }
 
     function invoke($eventName, $data = null) {
+      //var_dump($this->map);
         if(isset($this->map[$eventName])) {
             foreach ($this->map[$eventName] as $callback) {
                 call_user_func_array(array($this->objects[$callback], $eventName), array($data));
@@ -65,13 +66,11 @@ class Core {
     }
     }*/
 
-class MyPlugin implements Plugin {
+/*class MyPlugin implements Plugin {
     public function run() {
         echo "Running...<br />";
     }
-}
+    }*/
 
 
 
-echo xdebug_memory_usage()." bytes memory<br />";
-echo xdebug_time_index()." seconds";

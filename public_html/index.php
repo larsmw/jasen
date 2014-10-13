@@ -34,17 +34,12 @@ require_once '../libs/vendors/autoload.php';
 require_once 'core/core.php';
 
 class App implements Plugin {
-    private $config;
 
-    public function init() {
-        $this->config = new Config();
-    }
+  //public function init() {
+  //}
 
-    public function run() {
-//        var_dump($this->config);
-      $smarty = new Smarty();
-      echo "App 1 starting...";
-    }
+  public function run() {
+  }
 }
 
 // namespaces
