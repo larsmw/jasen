@@ -32,11 +32,6 @@ define("ROOT", getcwd());
 
 require_once '../libs/vendors/autoload.php';
 require_once 'core/core.php';
-// Death come here...
-
-//require_once 'core/classes/Application.php';
-//require_once 'core/classes/Crawler.php';
-//require_once 'core/classes/Pager.php';
 
 class App implements Plugin {
     private $config;
@@ -51,7 +46,6 @@ class App implements Plugin {
       echo "App 1 starting...";
     }
 }
-
 
 // namespaces
 //use App,Crawler;

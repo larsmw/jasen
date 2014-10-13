@@ -26,7 +26,7 @@ class Domain {
     $sql = "SELECT id,name FROM domain WHERE name like '" . $this->name . "';";
     $r = $this->db->fetchAssoc($sql);
     if(count($r)===0) {
-      $sql = "INSERT INTO domain (name) VALUES (:domain)";
+      $sql = "INSERT INTO domain (name, next_visit) VALUES (:domain, NOW())";
       $q = $this->db->db->prepare($sql);
       $q->execute(array(':domain'=>$this->name));
       $sql = "SELECT id,name FROM domain WHERE name like '" . $this->name . "';";
@@ -39,6 +39,20 @@ class Domain {
     else {
       return $r[0]['id'];
     }
+  }
+}
+
+class Url {
+  private $domain,$parts,$url;
+
+  public function __construct($url) {
+    $this->url = $url;
+    $this->domain = new Domain($url);
+    $this->parts = parse_url($url);
+  }
+
+  public function valid() {
+    return (!empty($this->parts['host'])) && (filter_var($this->url, FILTER_VALIDATE_URL) == TRUE);
   }
 }
 
@@ -126,13 +140,14 @@ class Crawler implements \Plugin {
     private function doRun($numUrls = 10) {
         ob_start();
         echo "<html><head>";
-        echo "<meta http-equiv=\"refresh\" content=\"5\">";
+                echo "<meta http-equiv=\"refresh\" content=\"5\">";
         echo "</head><body>";
         echo date(DATE_ATOM)."<br />\n";
 
         $sql = "SELECT id FROM `domain` WHERE next_visit<NOW() order by next_visit ASC limit " . $numUrls . ";";
         $ids = $this->db->fetchAssoc($sql);
         //var_dump($ids);
+        if(empty($ids)) return;
         foreach($ids as $id) {
             $db_ids[] = intval($id['id']);
         }
@@ -152,14 +167,14 @@ class Crawler implements \Plugin {
             $url = $this->db->fetchAssoc($sql);
             //var_dump($url,$sql);
             if(!count($url)) {
-	      // Crawl frontpage
+              // Crawl frontpage
               $url[0]['url'] = "";
             }
             $url = $url[0];
-	    $sql = "SELECT name FROM domain WHERE id=$db_id;";
-	    $r = $this->db->fetchAssoc($sql);
+            $sql = "SELECT name FROM domain WHERE id=$db_id;";
+            $r = $this->db->fetchAssoc($sql);
             //var_dump($r,$url);
-	    $url['url'] = "http://".$r[0]['name']."/".$url['url'];
+            $url['url'] = "http://".rtrim($r[0]['name'], "//")."/".ltrim($url['url'], "/");
             echo "Crawling : " . $this->limit_text($url['url'], 70)."";
             ob_flush();
 
@@ -180,14 +195,14 @@ class Crawler implements \Plugin {
 
             $this->updateNextVisit($url['url']);
 
-	    // delete domain if wrong
-	    if($db_id != $this->getDomainID($url['url'])) {
-	      var_dump($db_id);
-	      $sql = "DELETE FROM domain WHERE id = :cid;";
-	      $q = $this->db->db->prepare($sql);
-	      $q->BindParam('cid', $db_id, \PDO::PARAM_INT);
-	      $q->execute();
-	    }
+            // delete domain if wrong
+            if($db_id != $this->getDomainID($url['url'])) {
+              var_dump($db_id);
+              $sql = "DELETE FROM domain WHERE id = :cid;";
+              $q = $this->db->db->prepare($sql);
+              $q->BindParam('cid', $db_id, \PDO::PARAM_INT);
+              $q->execute();
+            }
 
             try {
                 $robot = new \robotstxt($url_part['scheme']."://".$url_part['host']);
@@ -204,71 +219,118 @@ class Crawler implements \Plugin {
                 continue;
             }
 
-	    $headers = get_headers($url['url'],1);
-	    //var_dump($headers);
-            $contenttype = $headers['Content-Type'];
-//            var_dump($contenttype);
-            if($contenttype === "text/html") {
-
-                $response = $this->downloadUrl($url['url']);
-                //var_dump($response);
-                // fetch urls from response
-                $dl_length = strlen($response);
-                echo " - Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
-                $dl_total += $dl_length;
-
-                $fn = $url_part['host'].$url_part['path'];
-                $dn = dirname($fn);
-                $bn = basename($fn);
-                $this->rmkdir("files/".$dn);
-                file_put_contents("files/".$dn."/".$bn, $response);
-
-//                $this->updateNextVisit($url['url']);
-                // Gets links from the page and formats them to a full valid url:
-//                echo "urls in page : ";
-                $urls = $this->pageLinks($response, $url['url'], true);
-//                var_dump($urls);
-                //echo count($links);
+            $headers = get_headers($url['url'],1);
+            //var_dump($headers[0]);
+            $run = true;
+            switch($headers[0]) {
+              case 'HTTP/1.1 301 Moved Permanently' :
+              case 'HTTP/1.0 301 Moved Permanently' :
+              case 'HTTP/1.0 301 Redirect' :
+              case 'HTTP/1.1 301' :
+              case 'HTTP/1.1 302 Moved Temporarily' :
+              case 'HTTP/1.0 302 Moved Temporarily' :
+              case 'HTTP/1.0 302 Found':
+              case 'HTTP/1.1 302 Found':
+              case 'HTTP/1.1 302 Redirect' :
+                // Moved - follow link
+                echo "&nbsp;<b>" . $headers[0] ."</b>";
+                //var_dump($headers['Location']);
+                if(is_array($headers['Location'])) {
+                  $location = $headers['Location'][0];
+                }
+                else
+                {
+                  $location = $headers['Location'];
+                }
+                echo " -> " . $location . "<br />";
+                $tmp = parse_url($location);
+                if(empty($tmp['host'])) $tmp['host'] = $base['host'];
+                if(empty($tmp['scheme'])) $tmp['scheme'] = $base['scheme'];
+                $tmp['scheme'] = $this->getSchemeID($tmp['scheme']);
+                $tmp['host'] = $this->getDomainID($tmp['host']);
+                if(!isset($tmp['path'])) $tmp['path'] = '/';
+                $ret[] = $tmp;
+                //var_dump($tmp);
+                $this->addCrawlerQueue($tmp['path'], $tmp['host']);
+                $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
+                $q = $this->db->db->prepare($sql);
+                $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
+                $q->execute();
+                $run = false;
+                break;
+              case 'HTTP/1.1 500 Internal Server Error' : 
+              case 'HTTP/1.1 400 Bad Request' :
+                // Wrong - remove link
+                $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
+                $q = $this->db->db->prepare($sql);
+                $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
+                $q->execute();
+                $run = false;
+                break;
+              case 'HTTP/1.0 200 OK' :
+              case 'HTTP/1.1 200 OK' :
+                // All is fine
+                break;
+              default:
+                var_dump($headers[0]);
             }
-            else {
-//                echo var_export($contenttype, TRUE)." : ";
-                $content = $this->downloadUrl($url['url']);
-                $dl_length = strlen($content);
-                echo " - Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
-                $dl_total += $dl_length;
 
-                $finfo = new \finfo(FILEINFO_MIME);
-                $this->dlStatus($finfo->buffer($content));
-                if($finfo->buffer($content) == "application/x-empty") {
-                    $this->dlStatus("No content!");
+            if($run) {
+              $contenttype = $headers['Content-Type'];
+              //var_dump($contenttype);
+              switch($contenttype) {
+                case "text/html" : 
+                case "text/html;charset=utf-8" :
+                case "text/html; charset=utf-8" :
+                case "text/html;charset=UTF-8" :
+                case "text/html; charset=UTF-8" :
+                case "text/html; charset=ISO-8859-1" :
+                case "text/html;charset=ISO-8859-1" :
+                  $response = $this->downloadUrl($url['url']);
+                  //var_dump($response);
+                  // fetch urls from response
+                  $dl_length = strlen($response);
+                  echo " - 1 Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
+                  $dl_total += $dl_length;
+                  
+                  $urls = $this->pageLinks($response, $url['url'], true);
+                  //                var_dump($urls);
+                  //echo count($links);
+                  break;
+                default:
+                  //                echo var_export($contenttype, TRUE)." : ";
+                  var_dump($contenttype);
+                  $content = $this->downloadUrl($url['url']);
+                  $dl_length = strlen($content);
+                  echo " - 2 Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
+                  $dl_total += $dl_length;
+                  
+                  $finfo = new \finfo(FILEINFO_MIME);
+                  $this->dlStatus($finfo->buffer($content));
+                  if($finfo->buffer($content) == "application/x-empty") {
+                    echo "No content!";
                     // remove url from crawl_queue
                     $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
                     $q = $this->db->db->prepare($sql);
                     $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
                     $q->execute();
                     continue;
-                }
-
-                $fn = $url_part['host'].$url_part['path'];
-                $dn = dirname($fn);
-                $bn = basename($fn);
-//                var_dump($bn);
-                $this->rmkdir("files/".$dn);
-//                echo basename($fn)."<br />";
-                file_put_contents("files/".$dn."/".$bn, $content);
-                // remove url from crawl_queue
-//                var_dump($url['id']);
-                $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
-                $q = $this->db->db->prepare($sql);
-                $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
-                $q->execute();
+                  }
+                  
+                  var_dump($url);
+                  //var_dump($content);
+                  $urls = $this->pageLinks($content, $url['url'], true);
+                  var_dump(count($urls));
+                  
+                  break;
+              }
+              
+              // remove url from crawl_queue
+              $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
+              $q = $this->db->db->prepare($sql);
+              $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
+              $q->execute();
             }
-
-            // remove url from crawl_queue
-            $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
-            $q = $this->db->db->prepare($sql);
-            $q->BindParam('cid', $url['id'], \PDO::PARAM_INT);
-            $q->execute();
             $this->showStatus();
         }
         echo "<p>Totally downloaded : <b>".$this->format_size($dl_total)."</b>.</p>";
@@ -282,6 +344,7 @@ class Crawler implements \Plugin {
         preg_match_all("/\<a.+?href=(\"|')(?!javascript:|#)(.+?)(\"|')/i", $html, $matches);
         $links = array();
         $ret = array();
+        //var_dump($matches[2]);var_dump($current_url);
         if(isset($matches[2])){
             $links = $matches[2];
         }
@@ -291,7 +354,6 @@ class Crawler implements \Plugin {
             $base       = parse_url($current_url);
             $split_path = explode("/", $dir);
             $url        = "";
-            //var_dump($links);
             foreach($links as $k => $link){
                 if(preg_match("/^\.\./", $link)){
                     $total = substr_count($link, "../");
@@ -315,18 +377,19 @@ class Crawler implements \Plugin {
 
             foreach($links as $link) {
                 // Dont add invalid urls
-                if(empty($url_part['host']) || (filter_var($url['url'], FILTER_VALIDATE_URL) == false)) {
+                $url_part = parse_url($link);
+                if(empty($url_part['host']) || (filter_var($link, FILTER_VALIDATE_URL) == false)) {
                     continue;
                 }
                 $tmp = parse_url($link);
                 if(empty($tmp['host'])) $tmp['host'] = $base['host'];
                 if(empty($tmp['scheme'])) $tmp['scheme'] = $base['scheme'];
-//                var_dump($link);
                 $tmp['scheme'] = $this->getSchemeID($tmp['scheme']);
                 $tmp['host'] = $this->getDomainID($tmp['host']);
                 if(!isset($tmp['path'])) $tmp['path'] = '/';
                 $ret[] = $tmp;
-                $this->addCrawlerQueue($link, $tmp['host']);
+                //var_dump($tmp);
+                $this->addCrawlerQueue($tmp['path'], $tmp['host']);
 
                 $r = $this->db->fetchAssoc("SELECT count(*) as num FROM urls WHERE url='".$tmp['path'].
                                            "' AND domain_id=".$tmp['host'].
@@ -341,7 +404,6 @@ class Crawler implements \Plugin {
                 }
             }
         }
-//        var_dump($ret);
         return $ret;
     }
 
@@ -408,22 +470,6 @@ class Crawler implements \Plugin {
     private function getDomainID($domain) {
       $d = new Domain($domain);
       return $d->getID();
-
-      /*        $sql = "SELECT id,name FROM domain WHERE name like '$domain';";
-        $r = $this->db->fetchAssoc($sql);
-        if(count($r)===0) {
-            $sql = "INSERT INTO domain (name) VALUES (:domain)";
-            $q = $this->db->db->prepare($sql);
-            $q->execute(array(':domain'=>$domain));
-            $sql = "SELECT id,name FROM domain WHERE name like '$domain';";
-            $r = $this->db->fetchAssoc($sql);
-//            var_dump($r);
-            return $r[0]['id'];
-//            throw new Exception("Domain dont exitst.... creating... try again");
-        }
-        else {
-            return $r[0]['id'];
-	    }*/
     }
 
     private function getCTID($ct) {

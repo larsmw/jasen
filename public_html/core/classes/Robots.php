@@ -75,7 +75,7 @@ class robotstxt {
     $longest  = 0;
     
     foreach ($rules as $r) {
-      if (preg_match($r['path'], $url) && (strlen($r['path']) >= $longest)) {
+      if (@preg_match($r['path'], $url) && (strlen($r['path']) >= $longest)) {
 	$longest  = strlen($r['path']);
 	$blocked  = !($r['allow']);
       }

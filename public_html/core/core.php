@@ -73,5 +73,5 @@ class MyPlugin implements Plugin {
 
 
 
-//echo xdebug_memory_usage()." bytes memory<br />";
-//echo xdebug_time_index()." seconds";
+echo xdebug_memory_usage()." bytes memory<br />";
+echo xdebug_time_index()." seconds";
