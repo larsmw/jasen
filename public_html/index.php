@@ -38,7 +38,15 @@ class App implements Plugin {
   //public function init() {
   //}
 
-  public function run() {
+  public function run( $data ) {
+    $u = new \User();
+
+    if(!$u->loggedin()) {
+      $u->loginform("form_user_login", "form_user_login_id", "/");
+    }
+    else {
+      $u->logout_btn();
+    }
   }
 }
 

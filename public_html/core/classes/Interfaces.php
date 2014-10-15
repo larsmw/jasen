@@ -1,20 +1,7 @@
 <?php
 
-
-interface IWebApplication
-{
-  function addRun( $observer );
-  function addMenu( $menu );
-}
-
-interface IWebPlugin
-{
-  function onRun( $sender, $args );
-  function onMenu( &$menu );
-}
-
 interface Plugin {
-    function run();
+    function run( $data );
 }
 
 class Singleton

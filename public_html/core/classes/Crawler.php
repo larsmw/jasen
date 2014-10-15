@@ -97,29 +97,32 @@ class Crawler implements \Plugin {
     /*
      * Starts a run of the crawler.
      */
-    public function run() {
-      if(isset($_GET['q'])) {
-        if($_GET['q'] === 'crawl' ) {
-            $this->doRun();
+    public function run( $data ) {
+      var_dump( $data );
+      if($data->access(array('crawler run'))) {
+        if(isset($_GET['q'])) {
+          if($_GET['q'] === 'crawl' ) {
+            $this->doRun(2);
+          }
         }
+        
+        
+        /*        $pid = pcntl_fork(); // fork
+                  if ($pid < 0)
+                  exit;
+                  else if ($pid) // parent
+                  exit;
+                  else { // child
+                  $sid = posix_setsid();
+                  
+                  if ($sid < 0)
+                  exit;
+                  
+                  $this->doRun();
+                  }
+                  
+                  header('Location: /');*/
       }
-
-
-/*        $pid = pcntl_fork(); // fork
-        if ($pid < 0)
-            exit;
-        else if ($pid) // parent
-            exit;
-        else { // child
-            $sid = posix_setsid();
-
-            if ($sid < 0)
-                exit;
-
-            $this->doRun();
-        }
-
-        header('Location: /');*/
     }
 
     private function downloadUrl($url) {
@@ -161,7 +164,6 @@ class Crawler implements \Plugin {
 //        $sql = "SELECT c.id,c.url,d.next_visit FROM crawl_queue c inner join domain d on d.id=c.domain_id group by d.id order by d.next_visit asc limit ".$numUrls.";";
         $dl_total = 0;
         // For each url that should be crawled
-//        die();
         foreach($db_ids as $db_id) {
             $sql = "SELECT c.id,c.url FROM crawl_queue c WHERE c.domain_id = '".$db_id."' order by c.id ASC limit 1;";
             $url = $this->db->fetchAssoc($sql);
@@ -212,7 +214,7 @@ class Crawler implements \Plugin {
             catch( Exception $e ) {
             }
             if($robot->isUrlBlocked($url['url'])) {
-                echo "Blocked by robots<br />";
+                echo " <b>Blocked by robots</b><br />";
                 // remove url from crawl_queue
                 $sql = "DELETE FROM crawl_queue WHERE id = :cid;";
                 $q = $this->db->db->prepare($sql);
