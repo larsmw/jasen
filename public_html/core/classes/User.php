@@ -28,7 +28,7 @@ class User {
 
   public function access($permission) {
     // check if user has permission
-    var_dump($permission);
+    //var_dump($permission);
     if($this->loggedin())
       return TRUE;
     else
