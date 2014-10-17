@@ -41,4 +41,20 @@ class Database {
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $result;
     }
+
+    public function insertGetId($table, $value) {
+      if(is_array($value))
+	$value = $value[0];
+      $sql = "SELECT id,name FROM $table WHERE name like '" . $value . "';";
+      $r = $this->fetchAssoc($sql);
+      if(count($r)===0) {
+	$sql = "INSERT INTO $table (name) VALUES (:name)";
+	$q = $this->db->prepare($sql);
+	$q->execute(array(':name'=>$value));
+	return $this->db->lastInsertId();
+      }
+      else {
+	return $r[0]['id'];
+      }
+    }
 }
