@@ -69,7 +69,7 @@ class User {
   }
 
   public function logout_btn() {
-    echo '
+    return '
 <form name="user_logout" method="post" id="user_logout_id" enctype="application/x-www-form-urlencoded" action="/">
 <input name="logout_action" id="action" value="logout" type="hidden">
 <input name="submit" id="submit" value="Logout" type="submit"></div>
@@ -78,7 +78,7 @@ class User {
   }
 
   public function loginform($formname, $formclass, $formaction){
-    echo'
+    return '
 <form name="'.$formname.'" method="post" id="'.$formname.'" class="'.$formclass.'" enctype="application/x-www-form-urlencoded" action="'.$formaction.'">
 <div><label for="username">Username</label>
 <input name="username" id="username" type="text"></div>

@@ -5,6 +5,7 @@ namespace Crawler;
 require_once "Database.php";
 require_once "Robots.php";
 require_once "Interfaces.php";
+require_once "Base.php";
 
 class Domain {
   private $name,$id;
@@ -140,7 +141,7 @@ class Url {
   }
 }
 
-class Crawler implements \Plugin {
+class Crawler extends \Base implements \Plugin {
 
     protected $db;
 
@@ -149,6 +150,7 @@ class Crawler implements \Plugin {
 
     public function __construct()
     {
+      parent::__construct();
       date_default_timezone_set("Europe/Copenhagen");
       $this->db = new \Database();
       $this->msgStack = new \SplStack();
@@ -165,7 +167,8 @@ class Crawler implements \Plugin {
         $s .= "Links : ".$r[0]['num']."<br />";
         $r = $this->db->fetchAssoc("SELECT count(*) as num FROM domain;");
         $s .= "Domains : ".$r[0]['num']."<br />";
-        return $s;
+	//echo $s;
+        return 0;
     }
 
     /*
@@ -217,20 +220,19 @@ class Crawler implements \Plugin {
      * Do the run...
      */
     private function doRun($numUrls = 10) {
-      ob_start();
-      echo "<html><head>";
-      echo "<meta http-equiv=\"refresh\" content=\"5\">";
-      echo "</head><body>";
-      echo date(DATE_ATOM)."<br />\n";
+      //ob_start();
+      //echo "<html><head>";
+      //echo "<meta http-equiv=\"refresh\" content=\"5\">";
+      //echo date(DATE_ATOM)."<br />\n";
 
       $urls = $this->getUrls($numUrls);
       $dl_total = 0;
       // For each url that should be crawled
       foreach($urls as $Url) {
-        echo "<b>Crawling : </b>" . $Url->getHref()."";
+        $out = "<b>Crawling : </b>" . $Url->getHref()."";
 
         if(!$Url->valid()) {
-          echo "<b>Invalid url</b><br />";
+          $out .= "<b>Invalid url</b><br />";
           continue;
         }
 	  
@@ -254,7 +256,7 @@ class Crawler implements \Plugin {
         catch( Exception $e ) {
         }
         if($robot->isUrlBlocked($Url->getUrl())) {
-          echo " <b>Blocked by robots</b><br />";
+          $out .= " <b>Blocked by robots</b><br />";
           continue;
         }
         //var_dump($Url->getId());
@@ -265,13 +267,13 @@ class Crawler implements \Plugin {
         $download_seconds = 0;
 
         if(!$headers) {
-          echo "Failed to get headers...<br />";
+          $out .= "Failed to get headers...<br />";
           continue;
         }
         $server_id = 0;
         $generator_id = 0;
         if(isset($headers['Server'])) {
-          var_dump($headers['Server']);
+          //var_dump($headers['Server']);
           $server_id = $Url->getServerId($headers['Server']);
         }
         else {
@@ -301,7 +303,7 @@ class Crawler implements \Plugin {
           case 'HTTP/1.1 302 Object Moved':
           case 'HTTP/1.1 302 Redirect' :
             // Moved - follow link
-            echo "&nbsp;<b>" . $headers[0] ."</b>";
+            $out .= "&nbsp;<b>" . $headers[0] ."</b>";
             //var_dump($headers['Location']);
             if(is_array($headers['Location'])) {
               $location = $headers['Location'][0];
@@ -310,7 +312,7 @@ class Crawler implements \Plugin {
               {
                 $location = $headers['Location'];
               }
-            echo " -> " . $location . "<br />";
+            $out .= " -> " . $location . "<br />";
             $tmp = parse_url($location);
             $base = parse_url($Url->getUrl());
             if(empty($tmp['host'])) $tmp['host'] = $base['host'];
@@ -356,27 +358,27 @@ class Crawler implements \Plugin {
             case "text/html;charset=iso-8859-1" :
             case "text/html;charset=ISO-8859-1" :
               $start_time = microtime(true);
-            $response = $this->downloadUrl($Url->getUrl());
-            $end_time = microtime(true);
-            $download_seconds = $end_time - $start_time;
+              $response = $this->downloadUrl($Url->getUrl());
+              $end_time = microtime(true);
+              $download_seconds = $end_time - $start_time;
 
-            // fetch urls from response
-            $Url->save(
-              strip_tags(
-                $this->removeDomNodes($response, '//script'), 
-                "<title><b><i><p><a><br>")); // remove scripts, preserve <tags> and save to file.
+              // fetch urls from response
+              $Url->save(
+                strip_tags(
+                  $this->removeDomNodes($this->removeDomNodes($response, '//script'), '//style'), 
+                  "<title><b><i><p><a><br>")); // remove scripts, preserve <tags> and save to file.
 
-            $dl_length = strlen($response);
-            echo " - 1 Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
-            $dl_total += $dl_length;
+              $dl_length = strlen($response);
+	      //echo " - 1 Downloaded <b>".$this->format_size($dl_length)."</b> bytes.<br />";
+              $dl_total += $dl_length;
 	      
-            $urls = $this->pageLinks($response, $Url->getUrl(), true);
-            //                var_dump($urls);
-            //echo count($links);
-            break;
+              $urls = $this->pageLinks($response, $Url->getUrl(), true);
+              //                var_dump($urls);
+              //echo count($links);
+              break;
             default:
               //                echo var_export($contenttype, TRUE)." : ";
-              var_dump($contenttype); 
+              //var_dump($contenttype); 
               break;
           }
         }
@@ -392,10 +394,10 @@ class Crawler implements \Plugin {
             ':generator'=>$generator_id));
         $this->showStatus();
       }
-      echo "<p>Totally downloaded : <b>".$this->format_size($dl_total)."</b>.</p>";
-      echo xdebug_memory_usage()." bytes memory<br />";
-      echo xdebug_time_index()." seconds";
-      echo "</body></html>";
+      $out .= "<p>Totally downloaded : <b>".$this->format_size($dl_total)."</b>.</p>";
+      $out .= xdebug_memory_usage()." bytes memory<br />";
+      $out .= xdebug_time_index()." seconds";
+      //echo $out;
     }
     
     // $html        = the html on the page
@@ -511,7 +513,7 @@ class Crawler implements \Plugin {
     private function removeDomNodes($html, $xpathString)
     {
       $dom = new \DOMDocument;
-      $dom->loadHtml($html);
+      @$dom->loadHtml($html);
       
       $xpath = new \DOMXPath($dom);
       while ($node = $xpath->query($xpathString)->item(0)) {

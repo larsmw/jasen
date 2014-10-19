@@ -32,8 +32,9 @@ define("ROOT", getcwd());
 
 require_once '../libs/vendors/autoload.php';
 require_once 'core/core.php';
+require_once 'core/classes/Base.php';
 
-class App implements Plugin {
+class App extends Base implements Plugin {
 
   //public function init() {
   //}
@@ -49,19 +50,22 @@ class App implements Plugin {
       }
     }
 
+    $template = $this->twig->loadTemplate('index.html');
+    //    var_dump($this->twig);die();
+    $template_vars = array();
+
     $u = new \User();
 
     if(!$u->loggedin()) {
-      $u->loginform("form_user_login", "form_user_login_id", "/");
+      $template_vars[] = $u->loginform("form_user_login", "form_user_login_id", "/");
     }
     else {
-      echo <<<EOL
+      $out = <<<EOL
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 <script type="text/javascript">
 jQuery(function($) {
 $('#ajax_run').click(
     function(){
-      console.log("Hej");
         var id = $(this).attr('id');
         jQuery.ajax({
             url: "ajax_start_crawl",
@@ -74,9 +78,19 @@ $('#ajax_run').click(
   });
 </script>
 EOL;
-      $u->logout_btn();
-      echo '<button id="ajax_run" name="Run">Run</button>';
+      //var_dump($out);
+      $template_vars['head'] = $out;
+      $out = $u->logout_btn();
+      $out .= '<button id="ajax_run" name="Run">Run</button>';
+      $template_vars['body'] = $out;
     }
+    $template_vars['title'] = 'Through twig...';
+    //var_dump($template_vars);
+    echo $template->render($template_vars);
+  }
+
+  public function __destruct() {
+    
   }
 }
 

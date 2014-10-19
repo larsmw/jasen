@@ -1,15 +1,10 @@
 <html>
   <head>
-    <title>Check your webpage for broken links.</title>
-    <script type="text/javascript" src="js/base.js"></script>
-    <link rel="stylesheet" type="text/css" href="/css/menu.css" />
-    <link rel="stylesheet" type="text/css" href="/css/default.css" />
+    <title>{{title}}</title>
+    {{ head|raw }}
   </head>
   <body onLoad="loadXMLDoc();">
-    {%region:mainmenu}
         <h1>Check your link structure</h1>
-	{%url-report}
-        {%login-form}
         <h4>Enter your url here</h4>
         <form id="add_url" action="/addurl" method="post">
             <label for="url">Url : </label>
@@ -20,5 +15,6 @@
 	  <input type="hidden" name="test" value="2" />
 	</form>
         <div id="myDiv"><h2>Status from ajax</h2></div>
+	{{body|raw}}
     </body>
 </html>
