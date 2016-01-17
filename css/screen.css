@@ -1,0 +1,14 @@
+
+#content {
+    float:left;
+    background-color: lightgrey;
+    max-width: 100%;
+    min-width: 780px;
+}
+
+#sidebar {
+    width: 280px;
+    border: 1px grey dashed;
+    float: right;
+    min-height: 20px;
+}

@@ -1,0 +1,1 @@
+<div class="[@css_class]">[@user_name]</div><!-- this is from the template -->
