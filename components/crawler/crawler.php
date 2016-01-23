@@ -13,8 +13,8 @@ class Crawler extends Component {
     $this->register('core', 'render', array($this, "render"));
 
     if (!$this->d->tableExists("crawl_queue")) {
-      $sql = "CREATE TABLE crawl_queue ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " . 
-	"url_id INT NOT NULL, time_to_crawl TIMESTAMP);";
+      $sql = "CREATE TABLE crawl_queue ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
+           "url_id INT NOT NULL, time_to_crawl TIMESTAMP);";
       $this->d->exec($sql);
     }
     if (!$this->d->tableExists("crawl_uri")) {
@@ -27,6 +27,20 @@ class Crawler extends Component {
 	"name VARCHAR(4096));";
       $this->d->exec($sql);
     }
+
+    /*
+crawl_stat,
+url_id, did, time.
+
+
+*/
+    if (!$this->d->tableExists("crawl_queue")) {
+      $sql = "CREATE TABLE crawl_stat ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
+           "url_id INT NOT NULL, domain_id INT, time_crawled TIMESTAMP);";
+      $this->d->exec($sql);
+    }
+
+
   }
 
   public function render($r, $e, $p) {
@@ -49,77 +63,97 @@ class Crawler extends Component {
   private function process() {
     $arr_http_code_ok = array(200);
 
-    foreach($this->getUriList() as $uri) {
+    foreach($this->getUriList() as $k=>$a_uri) {
+      //var_dump($a_uri);
+      $uri = $a_uri['url'];
+      //var_dump($uri);
+      $this->msg("Crawling : " . $uri);
       $uri_parts = parse_url($uri);
       if(empty($uri_parts['path'])) $uri_parts['path'] = "/";
       $this->log->add(var_export($uri_parts, TRUE));
       $this->robots = new RobotsTxt($uri_parts['scheme']."://" . $uri_parts['host']);
       if (!$this->robots->isBlocked($uri_parts['path'])) {
-	$this->msg("url id: " . $this->getUrlID($uri));
-	$this->log->add("I Will crawl : " . var_export($uri_parts, TRUE) . var_export($uri, TRUE));
-	$response = $this->fetch($uri);
-	/*
-	  response : array (
-	  \'url\' => \'http://the.url.i/crawled/\',
-	  \'content_type\' => \'text/html;charset=UTF-8\',
-	  \'http_code\' => 200,
-	  \'header_size\' => 292,
-	  \'request_size\' => 238,
-	  \'filetime\' => -1,
-	  \'ssl_verify_result\' => 0,
-	  \'redirect_count\' => 0,
-	  \'total_time\' => 0.40413500000000002,
-	  \'namelookup_time\' => 0.028840999999999999,
-	  \'connect_time\' => 0.14061000000000001,
-	  \'pretransfer_time\' => 0.140766,
-	  \'size_upload\' => 0,
-	  \'size_download\' => 9854,
-	  \'speed_download\' => 24382,
-	  \'speed_upload\' => 0,
-	  \'download_content_length\' => 9854,
-	  \'upload_content_length\' => 0,
-	  \'starttransfer_time\' => 0.39576500000000003,
-	  \'redirect_time\' => 0,
-	  \'redirect_url\' => \'\',
-	  \'primary_ip\' => \'1.2.3.4\',
-	  \'certinfo\' => 
-	  array (
-	  ),
-	  \'primary_port\' => 80,
-	  \'local_ip\' => \'10.0.2.15\',
-	  \'local_port\' => 49796,
-	  \'errno\' => 0,
-	  \'errmsg\' => \'\',
-	  \'content\' => \' Content of webpage.
-	*/
-	//$this->msg("response : " . var_export($response, TRUE));
-	if (in_array($response['http_code'], $arr_http_code_ok)) {
-	  $this->msg("response : total_time=" . 
-		     var_export($response['total_time'], TRUE)."s.");
-
-	  $DOM = new DOMDocument();
-	  //load the html string into the DOMDocument
-	  $DOM->loadHTML($response['content']);
-	  //get a list of all <A> tags
-	  $a = $DOM->getElementsByTagName('a');
-	  //loop through all <A> tags
-	  foreach($a as $link){
-	    $new_url = parse_url($link->getAttribute('href'));
-	    if (empty($new_url['host'])) $new_url['host'] = $uri_parts['host'];
-	    if (empty($new_url['scheme'])) $new_url['scheme'] = $uri_parts['scheme'];
-	    $this->msg("link-text : " . var_export($link->nodeValue, TRUE));
-	    $this->msg("link : " . var_export($new_url, TRUE));
-	  }
-	}
+          //$this->msg("url id: " . $this->getUrlID($uri));
+          $this->log->add("I Will crawl : " . var_export($uri_parts, TRUE) . var_export($uri, TRUE));
+          $response = $this->fetch($uri);
+          /*
+            response : array (
+            \'url\' => \'http://the.url.i/crawled/\',
+            \'content_type\' => \'text/html;charset=UTF-8\',
+            \'http_code\' => 200,
+            \'header_size\' => 292,
+            \'request_size\' => 238,
+            \'filetime\' => -1,
+            \'ssl_verify_result\' => 0,
+            \'redirect_count\' => 0,
+            \'total_time\' => 0.40413500000000002,
+            \'namelookup_time\' => 0.028840999999999999,
+            \'connect_time\' => 0.14061000000000001,
+            \'pretransfer_time\' => 0.140766,
+            \'size_upload\' => 0,
+            \'size_download\' => 9854,
+            \'speed_download\' => 24382,
+            \'speed_upload\' => 0,
+            \'download_content_length\' => 9854,
+            \'upload_content_length\' => 0,
+            \'starttransfer_time\' => 0.39576500000000003,
+            \'redirect_time\' => 0,
+            \'redirect_url\' => \'\',
+            \'primary_ip\' => \'1.2.3.4\',
+            \'certinfo\' => 
+            array (
+            ),
+            \'primary_port\' => 80,
+            \'local_ip\' => \'10.0.2.15\',
+            \'local_port\' => 49796,
+            \'errno\' => 0,
+            \'errmsg\' => \'\',
+            \'content\' => \' Content of webpage.
+          */
+          //$this->msg("response : " . var_export($response, TRUE));
+          if (in_array($response['http_code'], $arr_http_code_ok)) {
+              $this->msg("response : total_time=" . 
+                         var_export($response['total_time'], TRUE)."s.");
+              
+              $DOM = new DOMDocument();
+              //load the html string into the DOMDocument
+              $DOM->loadHTML($response['content']);
+              //get a list of all <A> tags
+              $a = $DOM->getElementsByTagName('a');
+              //loop through all <A> tags
+              foreach($a as $link){
+                  $new_url = parse_url($link->getAttribute('href'));
+                  if (empty($new_url['host'])) $new_url['host'] = $uri_parts['host'];
+                  if (empty($new_url['scheme'])) $new_url['scheme'] = $uri_parts['scheme'];
+                  if (empty($new_url['path'])) $new_url['path'] = "";
+                  //$this->msg("link-text : " . var_export($link->nodeValue, TRUE));
+                  //$this->msg("link : " . var_export($new_url, TRUE));
+                  $n = $new_url['scheme']."://".$new_url['host'].$new_url['path'];
+                  $crawl_url = $this->getUrlID($n);
+                  
+                  $sql = "SELECT id FROM crawl_queue WHERE 'url_id' = '$crawl_url';";
+                  $r = $this->d->q($sql);
+                  if( !is_array($r) || count($r)===0 ) {
+                      $sql = "INSERT INTO crawl_queue (url_id) VALUES ($crawl_url)";
+                      $q = $this->d->exec($sql);
+                      $this->msg("Added " . $n . " to queue.");
+                  }
+                  else {
+                      $this->msg("Did not add '" . $n . "' to queue.");
+                  }
+              }
+          }
       }
     }
   }
 
   private function getUriList($count = 1) {
-    $r = $this->d->q("SELECT id FROM crawl_queue limit " . $count . ";");
+    $r = $this->d->q("select concat(u.scheme,'://',d.name,u.path) as url, q.id from crawl_queue q join crawl_uri u on q.url_id=u.id join crawl_domain d on u.domain_id=d.id limit " . $count . ";");
+    //var_dump($r);
     if (empty($r)) {
-      return array("http://www.dmoz.org/Computers/News_and_Media/");
+      return array("https://en.wikipedia.org/wiki/Main_Page");
     } else {
+        $d = $this->d->q("delete from crawl_queue where id=" . $r[0]['id'] . ";");
       return $r;
     }
   }
@@ -127,7 +161,7 @@ class Crawler extends Component {
   private function getUrlID($url) {
     $tmp = parse_url($url);
     if(empty($tmp['host'])) throw new Exception("missing host");//$tmp['host'] = $base['host'];
-    $this->msg($url);
+    //$this->msg($url);
     //$tmp['scheme'] = $this->getSchemeID($tmp['scheme']);
     $tmp['host'] = $this->getDomainID($tmp['host']);
     if(!isset($tmp['path'])) $tmp['path'] = '/';
@@ -242,7 +276,6 @@ class RobotsTxt {
 	$robotsTxt     = $this->downloadUrl($domain.'/robots.txt');
 	if(!$robotsTxt) return FALSE;
 	$this->_rules  = $this->_makeRules($robotsTxt);
-	var_dump($this->_rules);
 	$sql = "INSERT INTO robots (url, data) " .
 	  "VALUES (:url, :data)";
 	
@@ -363,7 +396,7 @@ class RobotsTxt {
 	}
       }
       if(strcmp(strtolower($first), 'crawl-delay')) {
-	$rules['crawl-delay'] = (float)$second;
+          $rules['crawl-delay'] = (float)(($second==0)?10:$second);
       }
     } 
     

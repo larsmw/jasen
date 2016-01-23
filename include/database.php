@@ -18,7 +18,7 @@ class Database {
 	// DB doesn't exists. Create a new.
 	try {
 	  $dbh = new PDO($this->conf['pdo_nodb'], $this->conf['user'], $this->conf['pass']);
-	  $dbh->exec("CREATE DATABASE `" . $conf['db'] . "`;");
+	  $dbh->exec("CREATE DATABASE `" . $this->conf['db'] . "`;");
 	  $this->dbh = new PDO($this->conf['pdo'], $this->conf['user'], $this->conf['pass']);
 	  return TRUE;
 	} catch(PDOException $e){
