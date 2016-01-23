@@ -54,7 +54,6 @@ class Events {
 		     'return' => null
 		     );
 
-    var_dump($parameters);    
     $merged_parameters = array_merge($default, $parameters);
     if (!self::$events)
       self::$events = array();

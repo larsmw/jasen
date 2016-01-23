@@ -11,8 +11,52 @@ interface Components {
 
 class Component implements Components {
 
+
+  public function __construct() {
+  }
+
   public function register($namespace, $event, $method) {
     Events::register($namespace, $event, $method);
+  }
+
+  public function msg($message = NULL, $type = 'status') {
+    Messages::set($message, $type);
+  }
+}
+
+class Messages {
+  public function render($type = NULL) {
+    return "<pre>" . var_export(self::get_messages(), TRUE) . "</pre>";
+  }
+
+  public function set($message = NULL, $type = 'status') {
+    if (!isset($_SESSION['messages'][$type])) {
+      $_SESSION['messages'][$type] = array();
+    }
+    if (!in_array($message, $_SESSION['messages'][$type])) {
+      $_SESSION['messages'][$type][] = $message;
+    }
+    return isset($_SESSION['messages']) ? $_SESSION['messages'] : NULL;
+  }
+
+  public function get_messages($type = NULL, $clear_queue = TRUE) {
+    if ($messages = self::set()) {
+      if ($type) {
+	if ($clear_queue) {
+	  unset($_SESSION['messages'][$type]);
+	}
+	if (isset($messages[$type])) {
+	  return array($type => $messages[$type]);
+	}
+      }
+      else {
+	if ($clear_queue) {
+	  unset($_SESSION['messages']);
+	}
+	return $messages;
+      }
+    }
+    return array();
   }
 
 }

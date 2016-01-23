@@ -53,8 +53,6 @@ class Database {
   public function exec($sql) {
     try {
       $result = $this->dbh->exec($sql);
-      var_dump($sql);
-      var_dump($result);
       return TRUE;
     } catch(PDOException $e){
       syslog(LOG_INFO, $this->dbh->errorInfo());

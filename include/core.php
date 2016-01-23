@@ -1,6 +1,7 @@
 <?php
 
 include_once('logger.php');
+include_once('components.php');
 
 class Core {
 
@@ -12,11 +13,12 @@ class Core {
   private $time           =   0;
 
   private $log;
+  private $comp;
 
   public function __construct() {
     $this->time_start= microtime(TRUE);
     $this->log = new Logger();
-
+    $this->comp = new Component();
     // include all .php files in this folder.
     if (php_sapi_name() == "cli") {
       $this->site_root = dirname(dirname(__FILE__));
@@ -64,6 +66,7 @@ class Core {
     $page->set("title", $html['title']);
     $page->set("content", $html['content']);
     $page->set("sidebar", $html['sidebar']);
+    $page->set("messages", Messages::render());
     $this->add_css($page, "css/screen.css");
     echo $page->output();
   }

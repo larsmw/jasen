@@ -12,7 +12,9 @@
     <h3>Simple PHP Template Engine</h3>
   </div>
   <div id="content">
-    [@messages]
+    <div id="message_box">
+      [@messages]
+    </div>
     [@content]
     <div id="menu">
       <h2>Navigation</h2>
@@ -26,7 +28,7 @@
 [@sidebar]
   </div>
   <div id="footer">
-    [@debug]
+    [@footer]
   </div>
   [@post_files]
 </body>
