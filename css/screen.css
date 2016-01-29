@@ -7,7 +7,7 @@
 }
 
 #sidebar {
-    width: 280px;
+    width: 340px;
     border: 1px grey dashed;
     float: right;
     min-height: 20px;
@@ -29,4 +29,27 @@
     margin-left: 8px;
     margin-right: 8px;
     padding: 6px;
+}
+
+dl {
+    font-family: sans-serif;
+    font-size: smaller;
+}
+
+.dbg_item {
+    border: 1px dashed;
+    margin-bottom: 0.5em;
+}
+
+.dbg_source {
+    background-color: #192286;
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+    color: #D2CFFF;
+}
+
+.dbg_data {
+    margin-left: 0.7em;
+    margin-right: 0.5em;
+    color: #010039;
 }

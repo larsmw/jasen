@@ -26,7 +26,24 @@ class Component implements Components {
 
 class Messages {
   public function render($type = NULL) {
-    return "<pre>" . var_export(self::get_messages(), TRUE) . "</pre>";
+    $all_msg = self::get_messages();
+    $out = "";
+    $count = 0;
+    if(count($all_msg)>0) {
+      $out = "<div id=\"message_box\">";
+      foreach( $all_msg as $type) {
+	foreach($type as $msg) {
+	  //var_dump($msg);
+	  $out .= $msg;
+	  $count++;
+	}
+      }
+      $out .= "</div>";
+    }
+    if($count>0)
+      return $out;
+    else
+      return "";
   }
 
   public function set($message = NULL, $type = 'status') {
@@ -39,7 +56,7 @@ class Messages {
     return isset($_SESSION['messages']) ? $_SESSION['messages'] : NULL;
   }
 
-  public function get_messages($type = NULL, $clear_queue = TRUE) {
+  public function get_messages($type = 'status', $clear_queue = TRUE) {
     if ($messages = self::set()) {
       if ($type) {
 	if ($clear_queue) {

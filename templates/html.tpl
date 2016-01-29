@@ -8,19 +8,16 @@
 </head>
 <body>
   <div id="header">
-    <h2><a href="http://www.linkhub.dk">Linkhub</a></h2>
+    <h2><a href="/">Linkhub</a></h2>
     <h3>Simple PHP Template Engine</h3>
   </div>
   <div id="content">
-    <div id="message_box">
-      [@messages]
-    </div>
+    [@messages]
     [@content]
     <div id="menu">
       <h2>Navigation</h2>
       <ul>
-	<li><a href="user_profile.php">User profile</a> - example of a user profile page</li>
-	<li><a href="list_users.php">List users</a> - example table with listing of users</li>
+	<li><a href="/user">User profile</a> - example of a user profile page</li>
       </ul>
     </div>
   </div>

@@ -18,6 +18,7 @@ class Events {
     $event = str_replace('*', '.*', $event);
     $event = str_replace('/', '\/', $event);
     $event = '/^' . str_replace('all', '.*', $event) . '$/';
+
     if (!is_callable($handler))
       throw new EventDispatcherException("Handler $handler for $namespace/$event doesn't appear to be callable.");
     if (!isset(self::$events))
@@ -31,6 +32,8 @@ class Events {
     self::$events[$namespace][$event][$priority] = $handler;
     ksort(self::$events[$namespace][$event]);
     
+    //dbg(self::$events[$namespace][$event]);
+    //dbg($handler);
     return true;
   }
 

@@ -59,10 +59,15 @@ class Core {
     //echo 'You have '.sprintf("%01.2f",$free_to_mbs).' GBs free';
   }
 
-  public function render($r=NULL) {
+  public function render($r='', $e='', $p='') {
+    $path = (isset($_GET['q']))?$_GET['q']:"";
+    dbg($path);
     $page = new Template($this->site_root . "/templates/html.tpl");
     $html = array();
-    $html = Events::trigger('core', 'render', ['page' => $html, 'type' => 'html']);
+    $html = Events::trigger($path, 'render', 
+			    ['page' => $html, 
+			     'path' => $path, 
+			     'type' => 'html']);
     $page->set("title", $html['title']);
     $page->set("content", $html['content']);
     $page->set("sidebar", $html['sidebar']);
@@ -77,3 +82,13 @@ class Core {
   }
 }
 
+/* Utility functions */
+
+function dbg($var) {
+  $data = var_export($var, TRUE);
+  $backtrace = debug_backtrace();
+  //var_dump($backtrace);
+  $msg = "<div class=\"dbg_item\"><pre class=\"dbg_source\">" . $backtrace[0]['file'] . " - " . $backtrace[0]['line'] ."</pre>";
+  $msg .= "<pre class=\"dbg_data\">" . $data . "</pre></div>";
+  Messages::set($msg);
+}

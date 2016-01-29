@@ -10,11 +10,11 @@ class Crawler extends Component {
     $this->log = new Logger();
     $this->d = new Database();
     $this->register('core', 'cron', array($this, "cron"));
-    $this->register('core', 'render', array($this, "render"));
+    $this->register('*', 'render', array($this, "render"));
 
     if (!$this->d->tableExists("crawl_queue")) {
       $sql = "CREATE TABLE crawl_queue ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
-           "url_id INT NOT NULL, time_to_crawl TIMESTAMP);";
+           "url_id INT NOT NULL, did INT NOT NULL, priority INT DEFAULT 1, time_to_crawl TIMESTAMP);";
       $this->d->exec($sql);
     }
     if (!$this->d->tableExists("crawl_uri")) {
@@ -34,8 +34,8 @@ url_id, did, time.
 
 
 */
-    if (!$this->d->tableExists("crawl_queue")) {
-      $sql = "CREATE TABLE crawl_stat ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
+    if (!$this->d->tableExists("crawl_stats")) {
+      $sql = "CREATE TABLE crawl_stats ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
            "url_id INT NOT NULL, domain_id INT, time_crawled TIMESTAMP);";
       $this->d->exec($sql);
     }
@@ -49,67 +49,81 @@ url_id, did, time.
     //var_dump($this->robots->isBlocked("/includes/test"));
 
     $t = new Template("templates/user.tpl");
-    $t->set("user_name", "jeg mangler en template-fil");
     $t->set("css_class", 'user');
-    $this->process();
+    //$this->process();
+    // show log output
+    $sql = "SELECT * FROM cron_log where source like 'Crawler%' order by last_run desc limit 10;";
+    $r = $this->d->q($sql);
+    $o = "<dl>";
+    foreach($r as $row) {
+      $o .= "<dt>" . $row['source'] . "</dt>";
+      $o .= "<dd>" . $row['message'] . "</dd>";
+      $o .= "<dd>" . $row['last_run'] . "</dd>";
+    }
+    $o .= "</dl>";
+    $t->set("user_name", $o);
+
     return array('sidebar' => $t->output());
   }
 
   public function cron() {
-    $this->log->add("crawler starter");
-    //$this->process();
+    $this->process();
   }
 
+  /*
+    Curl sample response : 
+    response : array (
+    \'url\' => \'http://the.url.i/crawled/\',
+    \'content_type\' => \'text/html;charset=UTF-8\',
+    \'http_code\' => 200,
+    \'header_size\' => 292,
+    \'request_size\' => 238,
+    \'filetime\' => -1,
+    \'ssl_verify_result\' => 0,
+    \'redirect_count\' => 0,
+    \'total_time\' => 0.40413500000000002,
+    \'namelookup_time\' => 0.028840999999999999,
+    \'connect_time\' => 0.14061000000000001,
+    \'pretransfer_time\' => 0.140766,
+    \'size_upload\' => 0,
+    \'size_download\' => 9854,
+    \'speed_download\' => 24382,
+    \'speed_upload\' => 0,
+    \'download_content_length\' => 9854,
+    \'upload_content_length\' => 0,
+    \'starttransfer_time\' => 0.39576500000000003,
+    \'redirect_time\' => 0,
+    \'redirect_url\' => \'\',
+    \'primary_ip\' => \'1.2.3.4\',
+    \'certinfo\' => 
+    array (
+    ),
+    \'primary_port\' => 80,
+    \'local_ip\' => \'10.0.2.15\',
+    \'local_port\' => 49796,
+    \'errno\' => 0,
+    \'errmsg\' => \'\',
+    \'content\' => \' Content of webpage.
+  */
   private function process() {
     $arr_http_code_ok = array(200);
 
-    foreach($this->getUriList() as $k=>$a_uri) {
-      //var_dump($a_uri);
-      $uri = $a_uri['url'];
-      //var_dump($uri);
-      $this->msg("Crawling : " . $uri);
+    foreach($this->getUriList(25) as $k=>$a_uri) {
+      if (is_array($a_uri)) {
+	$uri = $a_uri['url'];
+      } else {
+	$uri = $a_uri;
+      }
       $uri_parts = parse_url($uri);
       if(empty($uri_parts['path'])) $uri_parts['path'] = "/";
-      $this->log->add(var_export($uri_parts, TRUE));
       $this->robots = new RobotsTxt($uri_parts['scheme']."://" . $uri_parts['host']);
       if (!$this->robots->isBlocked($uri_parts['path'])) {
-          //$this->msg("url id: " . $this->getUrlID($uri));
-          $this->log->add("I Will crawl : " . var_export($uri_parts, TRUE) . var_export($uri, TRUE));
+          $this->log->add("I Will crawl : <a href=" . $uri . ">" . $uri . "</a>");
           $response = $this->fetch($uri);
-          /*
-            response : array (
-            \'url\' => \'http://the.url.i/crawled/\',
-            \'content_type\' => \'text/html;charset=UTF-8\',
-            \'http_code\' => 200,
-            \'header_size\' => 292,
-            \'request_size\' => 238,
-            \'filetime\' => -1,
-            \'ssl_verify_result\' => 0,
-            \'redirect_count\' => 0,
-            \'total_time\' => 0.40413500000000002,
-            \'namelookup_time\' => 0.028840999999999999,
-            \'connect_time\' => 0.14061000000000001,
-            \'pretransfer_time\' => 0.140766,
-            \'size_upload\' => 0,
-            \'size_download\' => 9854,
-            \'speed_download\' => 24382,
-            \'speed_upload\' => 0,
-            \'download_content_length\' => 9854,
-            \'upload_content_length\' => 0,
-            \'starttransfer_time\' => 0.39576500000000003,
-            \'redirect_time\' => 0,
-            \'redirect_url\' => \'\',
-            \'primary_ip\' => \'1.2.3.4\',
-            \'certinfo\' => 
-            array (
-            ),
-            \'primary_port\' => 80,
-            \'local_ip\' => \'10.0.2.15\',
-            \'local_port\' => 49796,
-            \'errno\' => 0,
-            \'errmsg\' => \'\',
-            \'content\' => \' Content of webpage.
-          */
+	  $uid = $this->getUrlID($uri);
+	  $did = $this->getDomainID($uri_parts['host']);
+	  $sql = "INSERT INTO crawl_stats (url_id, domain_id) VALUES ($uid, $did)";
+	  $q = $this->d->exec($sql);
           //$this->msg("response : " . var_export($response, TRUE));
           if (in_array($response['http_code'], $arr_http_code_ok)) {
               $this->msg("response : total_time=" . 
@@ -129,32 +143,51 @@ url_id, did, time.
                   //$this->msg("link-text : " . var_export($link->nodeValue, TRUE));
                   //$this->msg("link : " . var_export($new_url, TRUE));
                   $n = $new_url['scheme']."://".$new_url['host'].$new_url['path'];
-                  $crawl_url = $this->getUrlID($n);
-                  
-                  $sql = "SELECT id FROM crawl_queue WHERE 'url_id' = '$crawl_url';";
-                  $r = $this->d->q($sql);
-                  if( !is_array($r) || count($r)===0 ) {
-                      $sql = "INSERT INTO crawl_queue (url_id) VALUES ($crawl_url)";
-                      $q = $this->d->exec($sql);
-                      $this->msg("Added " . $n . " to queue.");
-                  }
-                  else {
-                      $this->msg("Did not add '" . $n . "' to queue.");
-                  }
+		  $this->addtoqueue($n);
               }
           }
+      }
+      else {
+	// url is blocked by robots!?
+	$this->log->add("This is blocked : <a href=" . $uri . ">" . $uri . "</a>");
       }
     }
   }
 
   private function getUriList($count = 1) {
-    $r = $this->d->q("select concat(u.scheme,'://',d.name,u.path) as url, q.id from crawl_queue q join crawl_uri u on q.url_id=u.id join crawl_domain d on u.domain_id=d.id limit " . $count . ";");
+    $r = $this->d->q("select concat(u.scheme,'://',d.name,u.path) as url, q.id from crawl_queue q join crawl_uri u on q.url_id=u.id join crawl_domain d on u.domain_id=d.id group by d.id order by q.priority desc limit " . $count . ";");
     //var_dump($r);
     if (empty($r)) {
       return array("https://en.wikipedia.org/wiki/Main_Page");
     } else {
         $d = $this->d->q("delete from crawl_queue where id=" . $r[0]['id'] . ";");
       return $r;
+    }
+  }
+
+  private function addtoqueue($url) {
+    $crawl_url = $this->getUrlID($url);
+    if (strstr($url, "wikipedia.org")) {
+      // std priority is 1
+      $priority = 0;
+    } else if (strstr($url, ".dk")) {
+      $priority = 2;
+    }
+    else {
+      $priority = 1;
+    }
+    $sql = "SELECT id FROM crawl_queue WHERE 'url_id' = '$crawl_url';";
+    $r = $this->d->q($sql);
+    if( count($r)==0 ) {
+      $tmp = parse_url($url);
+      $did = $this->getDomainID($tmp['host']);
+      $sql = "INSERT INTO crawl_queue (url_id, did, priority) VALUES ($crawl_url, $did, $priority)";
+      $q = $this->d->exec($sql);
+      //$this->msg("Added " . $n . " to queue.");
+    }
+    else {
+      dbg($r);
+      $this->msg("Did not add '" . $n . "' to queue.");
     }
   }
 
