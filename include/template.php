@@ -7,7 +7,12 @@ class Template {
     $this->file = $file;
   }
   public function set($key, $value) {
-    $this->values[$key] = $value;
+      var_dump($key);
+      var_dump($value);
+      if(is_array($value) && isset($value[$key])) {
+          $value = $value[$key];
+      }
+      $this->values[$key] = $value;
   }
   public function output() {
     if (!file_exists($this->file)) {
@@ -15,6 +20,7 @@ class Template {
     }
     $output = file_get_contents($this->file);
     foreach ($this->values as $key => $value) {
+        dbg($value);
       $tagToReplace = "[@$key]";
             	$output = str_replace($tagToReplace, $value, $output);
     }

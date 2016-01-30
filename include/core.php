@@ -47,38 +47,39 @@ class Core {
 	$this->components[$class] = new $class;
       }
     }
+    $path = (isset($_GET['q']))?$_GET['q']:"html";
+    dbg($path);
+    $this->render($path);
   }
 
   public function __destruct(){
     $this->time_end = microtime(TRUE);
     $this->time = $this->time_end - $this->time_start;
     $this->log->add($this->time);
-    //$dir = $_SERVER['DOCUMENT_ROOT'];
-    //$free = disk_free_space($dir);
-    //$free_to_mbs = $free / (1024*1024*1024);
-    //echo 'You have '.sprintf("%01.2f",$free_to_mbs).' GBs free';
   }
 
-  public function render($r='', $e='', $p='') {
-    $path = (isset($_GET['q']))?$_GET['q']:"";
-    dbg($path);
+  public function render($type='', $e='', $p='') {
+    dbg($type);
+    dbg($e);
+    dbg($p);
     $page = new Template($this->site_root . "/templates/html.tpl");
     $html = array();
-    $html = Events::trigger($path, 'render', 
+    $html = Events::trigger($type, 'render', 
 			    ['page' => $html, 
-			     'path' => $path, 
-			     'type' => 'html']);
-    $page->set("title", $html['title']);
-    $page->set("content", $html['content']);
-    $page->set("sidebar", $html['sidebar']);
+			     'type' => $type]);
+    $page->set("title", $html);
+    $page->set("content", $html);
+    $page->set("sidebar", $html);
     $page->set("messages", Messages::render());
     $this->add_css($page, "css/screen.css");
     echo $page->output();
   }
 
   public function add_css($template, $path, $media="screen") {
-    $out = "<link rel=\"stylesheet\" media=\"$media\" type=\"text/css\" href=\"$path\" />";
-    $template->set("post_files", $out);
+    $css = new Template($this->site_root . "/templates/link_css.tpl");
+    $css->set("media", $media);
+    $css->set("path", $path);
+    $template->set("post_files", $css->output());
   }
 }
 
