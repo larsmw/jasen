@@ -15,7 +15,7 @@ class User extends Component {
     dbg($r);
     dbg($e);
     dbg($p);
-    switch($p['path']) {
+    switch($p['type']) {
     case 'user' : $name = "logged in username...";
       break;
     default: $name = "Log ind...";

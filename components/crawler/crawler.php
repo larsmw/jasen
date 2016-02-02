@@ -46,9 +46,8 @@ url_id, did, time.
   public function render($r, $e, $p) {
 
     $this->robots = new RobotsTxt("http://www.lokalkalender.dk/");
-    //var_dump($this->robots->isBlocked("/includes/test"));
 
-    $t = new Template("templates/user.tpl");
+    $t = new Template("templates/crawler.tpl");
     $t->set("css_class", 'user');
     //$this->process();
     // show log output
@@ -107,18 +106,28 @@ url_id, did, time.
   */
   private function process() {
     $arr_http_code_ok = array(200);
-
-    foreach($this->getUriList(25) as $k=>$a_uri) {
+    $good_content_types = array(
+				"text/html",
+				"text/html; charset=utf-8",
+				"text/html;charset=utf-8"
+				);
+    foreach($this->getUriList(35) as $k=>$a_uri) {
       if (is_array($a_uri)) {
 	$uri = $a_uri['url'];
       } else {
 	$uri = $a_uri;
       }
+      echo __LINE__ . ": " . $uri;
       $uri_parts = parse_url($uri);
       if(empty($uri_parts['path'])) $uri_parts['path'] = "/";
       $this->robots = new RobotsTxt($uri_parts['scheme']."://" . $uri_parts['host']);
       if (!$this->robots->isBlocked($uri_parts['path'])) {
           $this->log->add("I Will crawl : <a href=" . $uri . ">" . $uri . "</a>");
+	  echo $uri . " ";
+	  if (!in_array(strtolower(trim($this->get_content_type($uri))), $good_content_types)) {
+	    var_dump($this->get_content_type($uri));
+	    continue;
+	  }
           $response = $this->fetch($uri);
 	  $uid = $this->getUrlID($uri);
 	  $did = $this->getDomainID($uri_parts['host']);
@@ -128,10 +137,16 @@ url_id, did, time.
           if (in_array($response['http_code'], $arr_http_code_ok)) {
               $this->msg("response : total_time=" . 
                          var_export($response['total_time'], TRUE)."s.");
-              
+	      echo $response['total_time'];
+              libxml_use_internal_errors(TRUE);
               $DOM = new DOMDocument();
               //load the html string into the DOMDocument
               $DOM->loadHTML($response['content']);
+	      foreach (libxml_get_errors() as $error) {
+		// handle errors here
+		// Here we get the structural errors in the downloaded pages.
+	      }
+              libxml_use_internal_errors(FALSE);
               //get a list of all <A> tags
               $a = $DOM->getElementsByTagName('a');
               //loop through all <A> tags
@@ -145,27 +160,77 @@ url_id, did, time.
                   $n = $new_url['scheme']."://".$new_url['host'].$new_url['path'];
 		  $this->addtoqueue($n);
               }
+	      $titles = array();
+              $titles['h1'] = $DOM->getElementsByTagName('h1');
+              $titles['h2'] = $DOM->getElementsByTagName('h2');
+              $titles['h3'] = $DOM->getElementsByTagName('h3');
+	      /*foreach($titles['h1'] as $h1) {
+		echo "h1:";
+		var_dump($h1->nodeValue);
+	      }
+	      foreach($titles['h2'] as $h2) {
+		echo "h2:";
+		var_dump($h2->nodeValue);
+	      }
+	      foreach($titles['h3'] as $h3) {
+		echo "h3:";
+		var_dump($h3->nodeValue);
+		}*/
           }
+	  else {
+	    var_dump($response['http_code']);
+	  }
       }
       else {
 	// url is blocked by robots!?
 	$this->log->add("This is blocked : <a href=" . $uri . ">" . $uri . "</a>");
+	echo " Blocked!";
       }
+      echo "\n";
     }
   }
 
   private function getUriList($count = 1) {
-    $r = $this->d->q("select concat(u.scheme,'://',d.name,u.path) as url, q.id from crawl_queue q join crawl_uri u on q.url_id=u.id join crawl_domain d on u.domain_id=d.id group by d.id order by q.priority desc limit " . $count . ";");
-    //var_dump($r);
+    var_dump($count);
+    $r = $this->d->q("select concat(u.scheme,'://',d.name,u.path) as url, q.id, q.priority from crawl_queue q join crawl_uri u on q.url_id=u.id join crawl_domain d on u.domain_id=d.id where q.priority=2 group by d.id limit " . $count . ";");
     if (empty($r)) {
-      return array("https://en.wikipedia.org/wiki/Main_Page");
+      //return array("https://en.wikipedia.org/wiki/Main_Page");
+      $r = $this->d->q("select concat(u.scheme,'://',d.name,u.path) as url, q.id, q.priority from crawl_queue q join crawl_uri u on q.url_id=u.id join crawl_domain d on u.domain_id=d.id where q.priority=1 group by d.id limit " . $count . ";");
+      if (empty($r)) {
+	$r = $this->d->q("select concat(u.scheme,'://',d.name,u.path) as url, q.id, q.priority from crawl_queue q join crawl_uri u on q.url_id=u.id join crawl_domain d on u.domain_id=d.id where q.priority=0 group by d.id limit " . $count . ";");
+	if (empty($r)) {
+	  return array("https://en.wikipedia.org/wiki/Main_Page");
+	} else {
+	  foreach($r as $url) {
+	    $d = $this->d->q("delete from crawl_queue where id=" . $url['id'] . ";");
+	  }
+	  //echo "prio=0\n";
+	  //var_dump($r);
+	  return $r;
+	}
+      } else {
+	foreach($r as $url) {
+	  $d = $this->d->q("delete from crawl_queue where id=" . $url['id'] . ";");
+	}
+	//echo "prio=1\n";
+	//var_dump($r);
+	return $r;
+      }
     } else {
-        $d = $this->d->q("delete from crawl_queue where id=" . $r[0]['id'] . ";");
+      foreach($r as $url) {
+	$d = $this->d->q("delete from crawl_queue where id=" . $url['id'] . ";");
+      }
+      //echo "prio=2\n";
+      //var_dump($r);
       return $r;
     }
   }
 
   private function addtoqueue($url) {
+    $sql = "SELECT count(*) as num FROM crawl_queue;";
+    $r = $this->d->q($sql);
+    if ($r[0]['num'] > 100000) return;
+
     $crawl_url = $this->getUrlID($url);
     if (strstr($url, "wikipedia.org")) {
       // std priority is 1
@@ -176,7 +241,7 @@ url_id, did, time.
     else {
       $priority = 1;
     }
-    $sql = "SELECT id FROM crawl_queue WHERE 'url_id' = '$crawl_url';";
+    $sql = "SELECT id FROM crawl_queue WHERE url_id = $crawl_url;";
     $r = $this->d->q($sql);
     if( count($r)==0 ) {
       $tmp = parse_url($url);
@@ -186,8 +251,7 @@ url_id, did, time.
       //$this->msg("Added " . $n . " to queue.");
     }
     else {
-      dbg($r);
-      $this->msg("Did not add '" . $n . "' to queue.");
+      $this->msg("Did not add '" . $url . "' to queue.");
     }
   }
 
@@ -277,6 +341,23 @@ url_id, did, time.
     $header['errmsg']  = $errmsg;
     $header['content'] = $content;
     return $header;
+  }
+
+  private function get_content_type($url) {
+    $user_agent='Mozilla/5.0 (Windows NT 6.1; rv:8.0) Gecko/20100101 Firefox/8.0';
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
+    curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_HEADER, true); 
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    
+    $content = curl_exec ($ch);
+    $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+    curl_close ($ch);
+    return $contentType;
   }
 }
 

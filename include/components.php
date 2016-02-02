@@ -33,7 +33,6 @@ class Messages {
       $out = "<div id=\"message_box\">";
       foreach( $all_msg as $type) {
 	foreach($type as $msg) {
-	  //var_dump($msg);
 	  $out .= $msg;
 	  $count++;
 	}

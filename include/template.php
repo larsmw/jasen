@@ -7,8 +7,6 @@ class Template {
     $this->file = $file;
   }
   public function set($key, $value) {
-      var_dump($key);
-      var_dump($value);
       if(is_array($value) && isset($value[$key])) {
           $value = $value[$key];
       }
@@ -16,15 +14,20 @@ class Template {
   }
   public function output() {
     if (!file_exists($this->file)) {
-      return "Error loading template file ($this->file).<br />";
+      throw new Exception("Error loading template file ($this->file).");
     }
     $output = file_get_contents($this->file);
     foreach ($this->values as $key => $value) {
-        dbg($value);
+      //dbg($key);
+      //dbg($value);
+      if (is_array($value)) {
+	throw new Exception("string expected : key:".var_export($value, TRUE) . "value:".var_export($value, TRUE));
+      }
       $tagToReplace = "[@$key]";
             	$output = str_replace($tagToReplace, $value, $output);
     }
     $output = preg_replace('/\[@\w+]/i', '', $output);
+    //dbg($output);
     return $output;
   }
 

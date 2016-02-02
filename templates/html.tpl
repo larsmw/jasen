@@ -4,7 +4,7 @@
 <head>
 <title>[@title]</title>
 <meta charset="UTF-8" />
-[@header]
+  [@header]
 </head>
 <body>
   <div id="header">
@@ -14,15 +14,15 @@
   <div id="content">
     [@messages]
     [@content]
+  </div>
+  <div id="sidebar">
     <div id="menu">
       <h2>Navigation</h2>
       <ul>
 	<li><a href="/user">User profile</a> - example of a user profile page</li>
       </ul>
     </div>
-  </div>
-  <div id="sidebar">
-[@sidebar]
+    [@sidebar]
   </div>
   <div id="footer">
     [@footer]

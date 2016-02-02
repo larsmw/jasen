@@ -36,7 +36,8 @@ class Core {
       $Iterator = new RecursiveIteratorIterator($Directory);
       $Regex = new RegexIterator($Iterator, '/^.+\.php$/i', RegexIterator::GET_MATCH);
       foreach($Regex as $item) {
-	include_once($item[0]);
+	if (!strstr($item[0], ".#")) 
+	  include_once($item[0]);
       }
     }
 
@@ -67,12 +68,15 @@ class Core {
     $html = Events::trigger($type, 'render', 
 			    ['page' => $html, 
 			     'type' => $type]);
-    $page->set("title", $html);
-    $page->set("content", $html);
-    $page->set("sidebar", $html);
+    dbg($html);
+    if (isset($html['content'])) $page->set("title", $html['content']);
+    if (isset($html['content'])) $page->set("content", $html['content']);
+    if (isset($html['sidebar'])) $page->set("sidebar", $html['sidebar']);
     $page->set("messages", Messages::render());
     $this->add_css($page, "css/screen.css");
-    echo $page->output();
+    if (php_sapi_name() != "cli") {
+      echo $page->output();
+    }
   }
 
   public function add_css($template, $path, $media="screen") {
@@ -88,7 +92,6 @@ class Core {
 function dbg($var) {
   $data = var_export($var, TRUE);
   $backtrace = debug_backtrace();
-  //var_dump($backtrace);
   $msg = "<div class=\"dbg_item\"><pre class=\"dbg_source\">" . $backtrace[0]['file'] . " - " . $backtrace[0]['line'] ."</pre>";
   $msg .= "<pre class=\"dbg_data\">" . $data . "</pre></div>";
   Messages::set($msg);
