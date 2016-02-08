@@ -43,13 +43,16 @@ dl {
 
 .dbg_source {
     background-color: #192286;
-    margin-left: 0.5em;
-    margin-right: 0.5em;
+    margin-top: 1px:
+    margin-bottom: 1px:
+    margin-left: 4px;
+    margin-right: 6px;
     color: #D2CFFF;
 }
 
 .dbg_data {
-    margin-left: 0.7em;
-    margin-right: 0.5em;
+    margin: 1px:
+    margin-left: 6px;
+    margin-right: 6px;
     color: #010039;
 }

@@ -48,9 +48,8 @@ class Core {
 	$this->components[$class] = new $class;
       }
     }
-    $path = (isset($_GET['q']))?$_GET['q']:"html";
-    dbg($path);
-    $this->render($path);
+    $path = (isset($_GET['q']))?explode("/", $_GET['q']):array("html");
+    $this->render($path[0]);
   }
 
   public function __destruct(){
@@ -59,21 +58,28 @@ class Core {
     $this->log->add($this->time);
   }
 
-  public function render($type='', $e='', $p='') {
-    dbg($type);
-    dbg($e);
-    dbg($p);
-    $page = new Template($this->site_root . "/templates/html.tpl");
-    $html = array();
-    $html = Events::trigger($type, 'render', 
-			    ['page' => $html, 
-			     'type' => $type]);
-    dbg($html);
-    if (isset($html['content'])) $page->set("title", $html['content']);
-    if (isset($html['content'])) $page->set("content", $html['content']);
-    if (isset($html['sidebar'])) $page->set("sidebar", $html['sidebar']);
-    $page->set("messages", Messages::render());
-    $this->add_css($page, "css/screen.css");
+  public function render($type='html', $e='', $p='') {
+    switch ($type) {
+    case "html" :
+      $page = new Template($this->site_root . "/templates/html.tpl");
+      $html = array();
+      $html = Events::trigger($type, 'render', 
+			      ['page' => $html, 
+			       'type' => $type]);
+      if (isset($html['content'])) $page->set("title", $html['content']);
+      if (isset($html['content'])) $page->set("content", $html['content']);
+      if (isset($html['sidebar'])) $page->set("sidebar", $html['sidebar']);
+      $page->set("messages", Messages::render());
+      $this->add_css($page, "css/screen.css");
+      break;
+    case "ajax" :
+      $page = new Template($this->site_root . "/include/ajax/templates/main.tpl");
+      $ajax = array();
+      $ajax = Events::trigger($type, 'render', 
+			      ['page' => $ajax, 
+			       'type' => $type]);
+      if (isset($ajax['content'])) $page->set("content", $ajax['content']);
+    }
     if (php_sapi_name() != "cli") {
       echo $page->output();
     }

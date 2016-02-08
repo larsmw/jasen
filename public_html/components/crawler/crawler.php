@@ -11,6 +11,7 @@ class Crawler extends Component {
     $this->d = new Database();
     $this->register('core', 'cron', array($this, "cron"));
     $this->register('*', 'render', array($this, "render"));
+    $this->register('ajax', 'render', array($this, "ajax"));
 
     if (!$this->d->tableExists("crawl_queue")) {
       $sql = "CREATE TABLE crawl_queue ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
@@ -63,6 +64,13 @@ url_id, did, time.
     $t->set("user_name", $o);
 
     return array('sidebar' => $t->output());
+  }
+
+  public function ajax($r, $e, $p) {
+    $req = new Request();
+    if ($req->path(1) != "crawler")
+      return;
+    return array('content' => "hej-php");
   }
 
   public function cron() {
