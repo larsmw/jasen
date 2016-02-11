@@ -60,6 +60,17 @@ class Database {
     }
   }
 
+  public function insert($sql) {
+    try {
+      $result = $this->dbh->exec($sql);
+      $id = $this->dbh->lastInsertId();
+      return $id;
+    } catch(PDOException $e){
+      syslog(LOG_INFO, $this->dbh->errorInfo());
+      die("DB Error");
+    }
+  }
+
   public function execute($sql, $params) {
     try {
       $prep = $this->dbh->prepare($sql);

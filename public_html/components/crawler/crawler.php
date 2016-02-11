@@ -29,15 +29,9 @@ class Crawler extends Component {
       $this->d->exec($sql);
     }
 
-    /*
-crawl_stat,
-url_id, did, time.
-
-
-*/
     if (!$this->d->tableExists("crawl_stats")) {
       $sql = "CREATE TABLE crawl_stats ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
-           "url_id INT NOT NULL, domain_id INT, time_crawled TIMESTAMP);";
+           "url_id INT NOT NULL, domain_id INT, time_crawled TIMESTAMP, fetch_time FLOAT);";
       $this->d->exec($sql);
     }
 
@@ -70,10 +64,28 @@ url_id, did, time.
     $req = new Request();
     if ($req->path(1) != "crawler")
       return;
-    return array('content' => "hej-php");
+
+    // make report
+    $sql = "SELECT count(*) as num FROM crawl_domain;";
+    $r = $this->d->q($sql);
+    $o = "<p>Domains : " . $r[0]['num'] . "</p>";
+
+    $sql = "SELECT * FROM cron_log where source like 'Crawler%' order by last_run desc limit 25;";
+    $r = $this->d->q($sql);
+    $o .= "<dl>";
+    foreach($r as $row) {
+      $o .= "<dt>" . $row['source'] . "</dt>";
+      $o .= "<dd>" . $row['message'] . "</dd>";
+      $o .= "<dd>" . $row['last_run'] . "</dd>";
+    }
+    $o .= "</dl>";
+    $o .= "<p>Dato : " . date("c") . "</p>";
+    return array('content' => $o);
   }
 
   public function cron() {
+    $num_crawl_queue_entries = 10000;
+    $this->d->q("DELETE FROM crawl_queue WHERE id NOT IN (SELECT id FROM ( select id from crawl_queue order by id desc limit " .$num_crawl_queue_entries. " ) foo );");
     $this->process();
   }
 
@@ -113,16 +125,23 @@ url_id, did, time.
     \'content\' => \' Content of webpage.
   */
   private function process() {
+    echo "START\n";
     $arr_http_code_ok = array(200);
     $good_content_types = array(
 				"text/html",
 				"text/html; charset=utf-8",
 				"text/html;charset=utf-8"
 				);
-    foreach($this->getUriList(35) as $k=>$a_uri) {
+    $uri_list = $this->getUriList(15);
+    //var_dump($uri_list);
+    if (is_null($uri_list)) return;
+
+    foreach($uri_list as $k=>$a_uri) {
       if (is_array($a_uri)) {
-	$uri = $a_uri['url'];
+	$uri = Uri::toString($a_uri['url_id']);
       } else {
+	echo __LINE__;
+	var_dump($a_uri);
 	$uri = $a_uri;
       }
       echo __LINE__ . ": " . $uri;
@@ -131,15 +150,17 @@ url_id, did, time.
       $this->robots = new RobotsTxt($uri_parts['scheme']."://" . $uri_parts['host']);
       if (!$this->robots->isBlocked($uri_parts['path'])) {
           $this->log->add("I Will crawl : <a href=" . $uri . ">" . $uri . "</a>");
-	  echo $uri . " ";
 	  if (!in_array(strtolower(trim($this->get_content_type($uri))), $good_content_types)) {
+	    echo __LINE__;
 	    var_dump($this->get_content_type($uri));
 	    continue;
 	  }
           $response = $this->fetch($uri);
+	  echo "  - http:".$response['http_code']." ";
 	  $uid = $this->getUrlID($uri);
 	  $did = $this->getDomainID($uri_parts['host']);
-	  $sql = "INSERT INTO crawl_stats (url_id, domain_id) VALUES ($uid, $did)";
+	  $sql = "INSERT INTO crawl_stats (url_id, domain_id, fetch_time) VALUES ($uid, $did, " .
+	    $response['total_time'] . ")";
 	  $q = $this->d->exec($sql);
           //$this->msg("response : " . var_export($response, TRUE));
           if (in_array($response['http_code'], $arr_http_code_ok)) {
@@ -168,24 +189,11 @@ url_id, did, time.
                   $n = $new_url['scheme']."://".$new_url['host'].$new_url['path'];
 		  $this->addtoqueue($n);
               }
-	      $titles = array();
-              $titles['h1'] = $DOM->getElementsByTagName('h1');
-              $titles['h2'] = $DOM->getElementsByTagName('h2');
-              $titles['h3'] = $DOM->getElementsByTagName('h3');
-	      /*foreach($titles['h1'] as $h1) {
-		echo "h1:";
-		var_dump($h1->nodeValue);
-	      }
-	      foreach($titles['h2'] as $h2) {
-		echo "h2:";
-		var_dump($h2->nodeValue);
-	      }
-	      foreach($titles['h3'] as $h3) {
-		echo "h3:";
-		var_dump($h3->nodeValue);
-		}*/
+	      Events::trigger('content', 'index', 
+			      ['content' => $response['content']]);
           }
 	  else {
+	    echo __LINE__;
 	    var_dump($response['http_code']);
 	  }
       }
@@ -196,24 +204,27 @@ url_id, did, time.
       }
       echo "\n";
     }
+    echo "DONE\n";
   }
 
   private function getUriList($count = 1) {
-    var_dump($count);
-    $r = $this->d->q("select concat(u.scheme,'://',d.name,u.path) as url, q.id, q.priority from crawl_queue q join crawl_uri u on q.url_id=u.id join crawl_domain d on u.domain_id=d.id where q.priority=2 group by d.id limit " . $count . ";");
+    $delay = 30;
+    $sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=2 group by q.did limit " . $count . ";";
+    $r = $this->d->q($sql);
     if (empty($r)) {
       //return array("https://en.wikipedia.org/wiki/Main_Page");
-      $r = $this->d->q("select concat(u.scheme,'://',d.name,u.path) as url, q.id, q.priority from crawl_queue q join crawl_uri u on q.url_id=u.id join crawl_domain d on u.domain_id=d.id where q.priority=1 group by d.id limit " . $count . ";");
+      $sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=1 group by q.did limit " . $count . ";";
+      $r = $this->d->q($sql);
       if (empty($r)) {
-	$r = $this->d->q("select concat(u.scheme,'://',d.name,u.path) as url, q.id, q.priority from crawl_queue q join crawl_uri u on q.url_id=u.id join crawl_domain d on u.domain_id=d.id where q.priority=0 group by d.id limit " . $count . ";");
+	$sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=0 group by q.did limit " . $count . ";";
+	$r = $this->d->q($sql);
 	if (empty($r)) {
-	  return array("https://en.wikipedia.org/wiki/Main_Page");
+	  return null;
 	} else {
 	  foreach($r as $url) {
 	    $d = $this->d->q("delete from crawl_queue where id=" . $url['id'] . ";");
 	  }
 	  //echo "prio=0\n";
-	  //var_dump($r);
 	  return $r;
 	}
       } else {
@@ -221,7 +232,6 @@ url_id, did, time.
 	  $d = $this->d->q("delete from crawl_queue where id=" . $url['id'] . ";");
 	}
 	//echo "prio=1\n";
-	//var_dump($r);
 	return $r;
       }
     } else {
@@ -229,7 +239,6 @@ url_id, did, time.
 	$d = $this->d->q("delete from crawl_queue where id=" . $url['id'] . ";");
       }
       //echo "prio=2\n";
-      //var_dump($r);
       return $r;
     }
   }
@@ -237,10 +246,17 @@ url_id, did, time.
   private function addtoqueue($url) {
     $sql = "SELECT count(*) as num FROM crawl_queue;";
     $r = $this->d->q($sql);
-    if ($r[0]['num'] > 100000) return;
+    if ($r[0]['num'] > 1000) {
+      //$this->log->add("Did not add '" . $url . "' to queue.");
+      return;
+    }
 
-    $crawl_url = $this->getUrlID($url);
-    if (strstr($url, "wikipedia.org")) {
+    if (strstr($url, "wikipedia.org") ||
+	strstr($url, "wikinews.org") ||
+	strstr($url, "mediawiki.org") ||
+	strstr($url, "wikiquote.org") ||
+	strstr($url, "wikidata.org")
+	) {
       // std priority is 1
       $priority = 0;
     } else if (strstr($url, ".dk")) {
@@ -249,17 +265,19 @@ url_id, did, time.
     else {
       $priority = 1;
     }
-    $sql = "SELECT id FROM crawl_queue WHERE url_id = $crawl_url;";
+    $url_id = $this->getUrlID($url);
+    $sql = "SELECT id FROM crawl_queue WHERE url_id = $url_id;";
     $r = $this->d->q($sql);
+
     if( count($r)==0 ) {
       $tmp = parse_url($url);
       $did = $this->getDomainID($tmp['host']);
-      $sql = "INSERT INTO crawl_queue (url_id, did, priority) VALUES ($crawl_url, $did, $priority)";
+      $sql = "INSERT INTO crawl_queue (url_id, did, priority) VALUES ($url_id, $did, $priority)";
       $q = $this->d->exec($sql);
       //$this->msg("Added " . $n . " to queue.");
     }
     else {
-      $this->msg("Did not add '" . $url . "' to queue.");
+      //$this->log->add("Did not add '" . $url . "' to queue.");
     }
   }
 
@@ -291,10 +309,14 @@ url_id, did, time.
     $r = $this->d->q($sql);
     if(count($r)===0) {
       $sql = "INSERT INTO crawl_domain (name) VALUES ('".$domain."');";
-      $this->d->exec($sql);
-      $sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
-      $r = $this->d->q($sql);
-      return $r[0]['id'];
+      $id = $this->d->insert($sql);
+      /*echo __LINE__;
+      var_dump($domain);
+      echo __LINE__;
+      var_dump($id);*/
+      //$sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
+      //$r = $this->d->q($sql);
+      return $id;
     }
     else {
       return $r[0]['id'];
@@ -369,6 +391,16 @@ url_id, did, time.
   }
 }
 
+class Uri {
+  public function toString($id) {
+    /*SELECT * FROM linkhub.crawl_uri u inner join crawl_domain d on u.domain_id=d.id WHERE u.id=13423;*/
+    $d = new Database();
+    $sql = "SELECT * FROM linkhub.crawl_uri u inner join";
+    $sql .= " crawl_domain d on u.domain_id=d.id WHERE u.id=".$id.";";
+    $r = $d->q($sql);
+    return $r[0]['scheme']."://".$r[0]['name'].$r[0]['path'] ;
+  }
+}
 
 class RobotsTxt {
   

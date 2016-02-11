@@ -16,8 +16,10 @@ function showStats() {
     xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
   }
   xmlhttp.onreadystatechange = function() {
+console.log(xmlhttp.readyState);
     if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
       document.getElementById(item).innerHTML = xmlhttp.responseText;
+      setTimeout(showStats, 1000);
     }
   };
   xmlhttp.open("GET","ajax/crawler/stats/list",true);

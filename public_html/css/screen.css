@@ -33,7 +33,12 @@
 
 dl {
     font-family: sans-serif;
-    font-size: smaller;
+    font-size: 7pt;
+}
+
+dd {
+    font-family: sans-serif;
+    font-size: 9pt;
 }
 
 .dbg_item {

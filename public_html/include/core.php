@@ -55,7 +55,7 @@ class Core {
   public function __destruct(){
     $this->time_end = microtime(TRUE);
     $this->time = $this->time_end - $this->time_start;
-    $this->log->add($this->time);
+    //$this->log->add($this->time);
   }
 
   public function render($type='html', $e='', $p='') {
