@@ -40,10 +40,9 @@ class Crawler extends Component {
 
   public function render($r, $e, $p) {
 
-    $this->robots = new RobotsTxt("http://www.lokalkalender.dk/");
+    //$this->robots = new RobotsTxt("http://www.lokalkalender.dk/");
 
-    $t = new Template("templates/crawler.tpl");
-    $t->set("css_class", 'user');
+    /*$t = new Template("templates/crawler.tpl");
     //$this->process();
     // show log output
     $sql = "SELECT * FROM cron_log where source like 'Crawler%' order by last_run desc limit 10;";
@@ -55,9 +54,9 @@ class Crawler extends Component {
       $o .= "<dd>" . $row['last_run'] . "</dd>";
     }
     $o .= "</dl>";
-    $t->set("user_name", $o);
+    $t->set("content", $o);
 
-    return array('sidebar' => $t->output());
+    return array('content' => $t->output());*/
   }
 
   public function ajax($r, $e, $p) {
@@ -130,7 +129,8 @@ class Crawler extends Component {
     $good_content_types = array(
 				"text/html",
 				"text/html; charset=utf-8",
-				"text/html;charset=utf-8"
+				"text/html;charset=utf-8",
+				"text/html; charset=iso-8859-1"
 				);
     $uri_list = $this->getUriList(15);
     //var_dump($uri_list);
@@ -149,19 +149,22 @@ class Crawler extends Component {
       if(empty($uri_parts['path'])) $uri_parts['path'] = "/";
       $this->robots = new RobotsTxt($uri_parts['scheme']."://" . $uri_parts['host']);
       if (!$this->robots->isBlocked($uri_parts['path'])) {
+	if (!$this->robots->is_time()) {
+	  continue;
+	}
           $this->log->add("I Will crawl : <a href=" . $uri . ">" . $uri . "</a>");
-	  if (!in_array(strtolower(trim($this->get_content_type($uri))), $good_content_types)) {
-	    echo __LINE__;
-	    var_dump($this->get_content_type($uri));
-	    continue;
-	  }
           $response = $this->fetch($uri);
 	  echo "  - http:".$response['http_code']." ";
 	  $uid = $this->getUrlID($uri);
 	  $did = $this->getDomainID($uri_parts['host']);
 	  $sql = "INSERT INTO crawl_stats (url_id, domain_id, fetch_time) VALUES ($uid, $did, " .
 	    $response['total_time'] . ")";
-	  $q = $this->d->exec($sql);
+	  $q = $this->d->insert($sql);
+	  if (!in_array(strtolower(trim($this->get_content_type($uri))), $good_content_types)) {
+	    echo __LINE__;
+	    var_dump($this->get_content_type($uri));
+	    continue;
+	  }
           //$this->msg("response : " . var_export($response, TRUE));
           if (in_array($response['http_code'], $arr_http_code_ok)) {
               $this->msg("response : total_time=" . 
@@ -209,34 +212,37 @@ class Crawler extends Component {
 
   private function getUriList($count = 1) {
     $delay = 30;
-    $sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=2 group by q.did limit " . $count . ";";
+    $sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=2 group by q.did order by time_to_crawl asc limit " . $count . ";";
     $r = $this->d->q($sql);
     if (empty($r)) {
       //return array("https://en.wikipedia.org/wiki/Main_Page");
-      $sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=1 group by q.did limit " . $count . ";";
+      $sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=1 group by q.did order by time_to_crawl asc limit " . $count . ";";
       $r = $this->d->q($sql);
       if (empty($r)) {
-	$sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=0 group by q.did limit " . $count . ";";
+	$sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=0 group by q.did order by time_to_crawl asc limit " . $count . ";";
 	$r = $this->d->q($sql);
 	if (empty($r)) {
 	  return null;
 	} else {
 	  foreach($r as $url) {
-	    $d = $this->d->q("delete from crawl_queue where id=" . $url['id'] . ";");
+	    //var_dump($url);
+	    $d = $this->d->q("delete from crawl_queue where url_id=" . $url['url_id'] . ";");
 	  }
 	  //echo "prio=0\n";
 	  return $r;
 	}
       } else {
 	foreach($r as $url) {
-	  $d = $this->d->q("delete from crawl_queue where id=" . $url['id'] . ";");
+	  //var_dump($url);
+	  $d = $this->d->q("delete from crawl_queue where url_id=" . $url['url_id'] . ";");
 	}
 	//echo "prio=1\n";
 	return $r;
       }
     } else {
       foreach($r as $url) {
-	$d = $this->d->q("delete from crawl_queue where id=" . $url['id'] . ";");
+	//var_dump($url);
+	$d = $this->d->q("delete from crawl_queue where url_id=" . $url['url_id'] . ";");
       }
       //echo "prio=2\n";
       return $r;
@@ -255,7 +261,8 @@ class Crawler extends Component {
 	strstr($url, "wikinews.org") ||
 	strstr($url, "mediawiki.org") ||
 	strstr($url, "wikiquote.org") ||
-	strstr($url, "wikidata.org")
+	strstr($url, "wikidata.org") ||
+	strstr($url, "wikimediafoundation.org")
 	) {
       // std priority is 1
       $priority = 0;
@@ -415,6 +422,7 @@ class RobotsTxt {
     if (empty($r)) {
       $sql = "CREATE TABLE robots ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
 	"url VARCHAR(2048) NOT NULL, " .
+	"delay INT NOT NULL DEFAULT 15," . 
 	"data TEXT, " .
 	"last_fetch TIMESTAMP);";
       $d->exec($sql);
@@ -430,15 +438,15 @@ class RobotsTxt {
 	$robotsTxt     = $this->downloadUrl($domain.'/robots.txt');
 	if(!$robotsTxt) return FALSE;
 	$this->_rules  = $this->_makeRules($robotsTxt);
-	$sql = "INSERT INTO robots (url, data) " .
-	  "VALUES (:url, :data)";
-	
+	$sql = "INSERT INTO robots (url, data, delay) " .
+	  "VALUES (:url, :data, :delay)";
 	
 	$this->log->add("Fetched robots.txt from " . $domain . " : " . var_export($sql, TRUE));
 
 	$params = array('url' => 
 			$domain,
-			'data' => serialize($this->_rules));
+			'data' => serialize($this->_rules), 
+			'delay' => $this->_rules['crawl-delay']);
 	$d->execute($sql, $params);
 	
       } catch (Exception $e) {
@@ -448,8 +456,10 @@ class RobotsTxt {
     }
     else {
       // load from db
+      var_dump($domain);
       $r = $d->q("SELECT * FROM robots WHERE url like '$domain' limit 1;");
       $this->_rules = unserialize(array_pop($r)['data']);
+      //var_dump($this->_rules);
     }
   }
   
@@ -553,10 +563,33 @@ class RobotsTxt {
           $rules['crawl-delay'] = (float)(($second==0)?10:$second);
       }
     } 
-    
+    if (!isset($rules['crawl-delay'])) 
+      $rules['crawl-delay'] = 10;
     return $rules;
   }
   
+  public function is_time() {
+    $d = new Database();
+    $url_parts = parse_url($this->_domain);
+    $did = $this->getDomainId($url_parts['host']);
+    $sql = "SELECT * FROM crawl_stats WHERE domain_id='".$did."' order by time_crawled desc limit 1;";
+    $r = $d->q($sql);
+    if (empty($r)) {
+
+      echo "TRUUUEEE " . $this->_domain . "\n";
+      return TRUE;
+    }
+    $visit = strtotime($r[0]['time_crawled']);
+    $now = strtotime(date('c'));
+    if (($now - $visit) > $this->_rules['crawl-delay']) {
+      echo "TRUUUEEE " . $this->_domain . "\n";
+      return TRUE;
+    }
+    else {
+      echo "FALSEEE " . $this->_domain . " Delay : ".$this->_rules['crawl-delay']."\n";
+      return FALSE;
+    }
+  }
   /**
    * ermittle den RegEx, der auf die Pfad-Angabe aus der robots.txt pass
    */
@@ -572,4 +605,23 @@ class RobotsTxt {
     return '#'.$regEx.'#';
   }
   
+  private function getDomainID($domain) {
+    $d = new Database();
+    $sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
+    $r = $d->q($sql);
+    if(count($r)===0) {
+      $sql = "INSERT INTO crawl_domain (name) VALUES ('".$domain."');";
+      $id = $d->insert($sql);
+      /*echo __LINE__;
+      var_dump($domain);
+      echo __LINE__;
+      var_dump($id);*/
+      //$sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
+      //$r = $this->d->q($sql);
+      return $id;
+    }
+    else {
+      return $r[0]['id'];
+    }
+  }
 }

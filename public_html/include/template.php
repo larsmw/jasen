@@ -3,15 +3,18 @@
 class Template {
   protected $file;
   protected $values = array();
+
   public function __construct($file) {
     $this->file = $file;
   }
+
   public function set($key, $value) {
       if(is_array($value) && isset($value[$key])) {
           $value = $value[$key];
       }
       $this->values[$key] = $value;
   }
+
   public function output() {
     if (!file_exists($this->file)) {
       throw new Exception("Error loading template file ($this->file).");

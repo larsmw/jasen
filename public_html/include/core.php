@@ -81,7 +81,8 @@ class Core {
       if (isset($ajax['content'])) $page->set("content", $ajax['content']);
     }
     if (php_sapi_name() != "cli") {
-      echo $page->output();
+      if (isset($page) && get_class($page) == "Template")
+	echo $page->output();
     }
   }
 

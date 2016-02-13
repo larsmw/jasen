@@ -1,5 +1,23 @@
 <?php
 
+/*
+Term frequency
+IDF
+
+Entropy
+Information Gain ?
+
+Stemming : porterstemmer.
+
+overfitting?
+
+KNN
+Euclidian Distance
+
+cosine similarity?
+
+*/
+
 class Indexer extends Component {
 
   public function __construct() {
@@ -68,9 +86,10 @@ class Indexer extends Component {
     //asort(array_count_values(
     $doc = strip_tags($html, "<p><br>");
     $doc = $this->removeStopWords($doc);
+    // TODO: stemming
     $words = array_count_values(str_word_count($doc, 1));
     arsort($words);
-    var_dump(array_slice($words,0,20));
+    //var_dump(array_slice($words,0,2));
   }
 
   private function removeStopWords($input){
