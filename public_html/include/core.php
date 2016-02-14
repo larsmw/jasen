@@ -66,7 +66,7 @@ class Core {
       $html = Events::trigger($type, 'render', 
 			      ['page' => $html, 
 			       'type' => $type]);
-      if (isset($html['content'])) $page->set("title", $html['content']);
+      if (isset($html['title'])) $page->set("title", $html['title']);
       if (isset($html['content'])) $page->set("content", $html['content']);
       if (isset($html['sidebar'])) $page->set("sidebar", $html['sidebar']);
       $page->set("messages", Messages::render());

@@ -85,6 +85,10 @@ class Indexer extends Component {
 
     //asort(array_count_values(
     $doc = strip_tags($html, "<p><br>");
+
+    // cpu...... bleeding...
+    $classifier = new Classifier(new PersistentMemory());
+    var_dump($classifier->guess($doc));
     $doc = $this->removeStopWords($doc);
     // TODO: stemming
     $words = array_count_values(str_word_count($doc, 1));

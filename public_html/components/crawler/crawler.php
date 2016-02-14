@@ -130,7 +130,8 @@ class Crawler extends Component {
 				"text/html",
 				"text/html; charset=utf-8",
 				"text/html;charset=utf-8",
-				"text/html; charset=iso-8859-1"
+				"text/html; charset=iso-8859-1",
+				"text/html;charset=iso-8859-1",
 				);
     $uri_list = $this->getUriList(15);
     //var_dump($uri_list);
@@ -152,7 +153,7 @@ class Crawler extends Component {
 	if (!$this->robots->is_time()) {
 	  continue;
 	}
-          $this->log->add("I Will crawl : <a href=" . $uri . ">" . $uri . "</a>");
+          $this->log->add("I Will crawl : <a href=" . $uri . " target=\"_BLANK\">" . $uri . "</a>");
           $response = $this->fetch($uri);
 	  echo "  - http:".$response['http_code']." ";
 	  $uid = $this->getUrlID($uri);
@@ -290,7 +291,9 @@ class Crawler extends Component {
 
   private function getUrlID($url) {
     $tmp = parse_url($url);
-    if(empty($tmp['host'])) throw new Exception("missing host");//$tmp['host'] = $base['host'];
+    if(empty($tmp['host'])) throw new Exception("missing host :" . 
+		   var_export($tmp, TRUE));
+    //$tmp['host'] = $base['host'];
     //$this->msg($url);
     //$tmp['scheme'] = $this->getSchemeID($tmp['scheme']);
     $tmp['host'] = $this->getDomainID($tmp['host']);
@@ -346,7 +349,7 @@ class Crawler extends Component {
     }
   }
 
-  private function fetch($url) {
+  public function fetch($url) {
     $user_agent='Mozilla/5.0 (Windows NT 6.1; rv:8.0) Gecko/20100101 Firefox/8.0';
 
     $options = array(
@@ -456,14 +459,13 @@ class RobotsTxt {
     }
     else {
       // load from db
-      var_dump($domain);
       $r = $d->q("SELECT * FROM robots WHERE url like '$domain' limit 1;");
       $this->_rules = unserialize(array_pop($r)['data']);
       //var_dump($this->_rules);
     }
   }
   
-  private function downloadUrl($url) {
+  public function downloadUrl($url) {
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_HEADER, 0);
       curl_setopt($ch, CURLOPT_VERBOSE, 0);
@@ -576,17 +578,16 @@ class RobotsTxt {
     $r = $d->q($sql);
     if (empty($r)) {
 
-      echo "TRUUUEEE " . $this->_domain . "\n";
+      echo "First visit : " . $this->_domain . "\n";
       return TRUE;
     }
     $visit = strtotime($r[0]['time_crawled']);
     $now = strtotime(date('c'));
     if (($now - $visit) > $this->_rules['crawl-delay']) {
-      echo "TRUUUEEE " . $this->_domain . "\n";
       return TRUE;
     }
     else {
-      echo "FALSEEE " . $this->_domain . " Delay : ".$this->_rules['crawl-delay']."\n";
+      echo "Too early to crawl : " . $this->_domain . " Delay : ".$this->_rules['crawl-delay']."\n";
       return FALSE;
     }
   }
