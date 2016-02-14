@@ -46,6 +46,7 @@ class PersistentMemory implements StorageAdapter
 
   public function __construct() {
     $this->d = new Database();
+    // we should have a word index elsewhere!!
     if (!$this->d->tableExists("classifier_words")) {
       $sql = "CREATE TABLE classifier_words ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
 	"word VARCHAR(2048));";
@@ -266,7 +267,7 @@ class Classifier
     $array = array_values($array);
     $clean = array();
     foreach ($array as $k)
-      if ($this->startsWithUppercase($k))
+      //if ($this->startsWithUppercase($k))
 	$clean[ ] = $k;
     return array_values($clean);
   }
@@ -276,14 +277,25 @@ class Classifier
    */
   public function guess($text)
   {
+    echo __LINE__;
     var_dump(microtime(TRUE));
     $scores = array();
     $words  = $this->parse($text);
+    echo __LINE__;
+    var_dump($words); return;
     $labels = $this->getStorage()
       ->getDistinctLabels();
+    echo __LINE__;
+    var_dump($labels);
+return;
     foreach ($labels as $label) {
+      echo $label;
+    echo __LINE__;
+      var_dump(microtime(TRUE));
       $logSum = 0;
       foreach ($words as $word) {
+	echo $word;
+	var_dump(microtime(TRUE));
 	$wordTotalCount = $this->getStorage()
 	  ->getWordCount($word);
 	if ($wordTotalCount == 0) {
@@ -310,6 +322,7 @@ class Classifier
        */
       $scores[ $label ] = 1 / (1 + exp($logSum));
     }
+    echo __LINE__;
     var_dump(microtime(TRUE));
     return $scores;
   }
