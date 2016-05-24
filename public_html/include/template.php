@@ -7,10 +7,13 @@
  * The template class which transforms template files into a proper output.
  */
 class Template {
+  /** $file - The file been processed */
   protected $file;
+  /** Internal array of values to be inserted into file. */
   protected $values = array();
 
   /**
+   * Initiates a template object for an input-file.
    * @param string $file is the template-file that should be transformed.
    */
   public function __construct($file) {
@@ -18,7 +21,7 @@ class Template {
   }
 
   /**
-   * Sets a value for the key(s) in the template-file
+   * Sets a value for the key(s) in the template-file.
    * @param string $key 
    * @param string $value
    */
@@ -52,6 +55,11 @@ class Template {
     return $output;
   }
 
+  /**
+   * Merges multiple pieces of templates into one.
+   * @param string $template
+   * @param string $separator - to be inserted between merged items.
+   */
   static public function merge($templates, $separator = "\n") {
     $output = "";
     

@@ -1,7 +1,16 @@
 <?php
+/**
+ * {@inheritdoc}
+ */
 
+/**
+ * {@inheritdoc}
+ */
 class Admin extends Component {
 
+  /**
+   * {@inheritdoc}
+   */
   public function __construct() {
     $this->d = new Database();
     $this->register('html', 'render', array($this, "render"));
@@ -15,6 +24,9 @@ class Admin extends Component {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function render($r, $e, $p) {
 
     $t = new Template("templates/admin.tpl");
