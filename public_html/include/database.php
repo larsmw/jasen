@@ -40,6 +40,11 @@ class Database {
 
   public function q($sql) {
     $r = array();
+    if (!isset($this->dbh)) {
+      $this->conf = $this->get_config();
+      //var_dump($this->conf);
+      $this->dbh = new PDO($this->conf['pdo'], $this->conf['user'], $this->conf['pass']);
+    }
     $q = $this->dbh->prepare($sql);
     $q->execute();
     if ($q->rowCount() > 0) {

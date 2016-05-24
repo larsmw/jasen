@@ -282,11 +282,11 @@ class Classifier
     $scores = array();
     $words  = $this->parse($text);
     echo __LINE__;
-    var_dump($words); return;
+    //var_dump($words); return;
     $labels = $this->getStorage()
       ->getDistinctLabels();
     echo __LINE__;
-    var_dump($labels);
+    //var_dump($labels);
 return;
     foreach ($labels as $label) {
       echo $label;

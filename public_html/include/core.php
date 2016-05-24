@@ -31,6 +31,7 @@ class Core {
 			    $this->site_root . "/components",
 			    );
 
+    date_default_timezone_set("Europe/Copenhagen");
     foreach($component_dirs as $dir) {
       $Directory = new RecursiveDirectoryIterator($dir);
       $Iterator = new RecursiveIteratorIterator($Directory);
@@ -48,8 +49,10 @@ class Core {
 	$this->components[$class] = new $class;
       }
     }
-    $path = (isset($_GET['q']))?explode("/", $_GET['q']):array("html");
-    $this->render($path[0]);
+    if (php_sapi_name() != "cli") {
+      $path = (isset($_GET['q']))?explode("/", $_GET['q']):array("html");
+      $this->render($path[0]);
+    }
   }
 
   public function __destruct(){
@@ -96,6 +99,11 @@ class Core {
 
 /* Utility functions */
 
+/**
+ * dbg
+ * @args: $var
+ * @return: nothing
+ */
 function dbg($var) {
   $data = var_export($var, TRUE);
   $backtrace = debug_backtrace();

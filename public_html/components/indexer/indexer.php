@@ -20,17 +20,34 @@ cosine similarity?
 
 class Indexer extends Component {
 
+  private $log, $d;
+
   public function __construct() {
     // register paths to handle
+    $this->log = new Logger();
+    $this->d = new Database();
     $this->register('content', 'index', array($this, "process"));
+    if (!$this->d->tableExists("person")) {
+      $sql = "CREATE TABLE person ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
+           "fullname varchar(512));";
+      $this->d->exec($sql);
+    }
+    if (!$this->d->tableExists("person_uri")) {
+      $sql = "CREATE TABLE person_uri ( id INT UNSIGNED, " .
+           "uri INT, PRIMARY KEY (id,uri));";
+      $this->d->exec($sql);
+    }
+
   }
 
   public function process($r, $e, $p) {
-    //var_dump($p['content']);
+    $uri = $p['uri'];
+
     libxml_use_internal_errors(TRUE);
     $DOM = new DOMDocument();
-    //load the html string into the DOMDocument
-    $DOM->loadHTML($p['content']);
+    // load the html string into the DOMDocument
+    // replace white-space with ' '
+    $DOM->loadHTML(preg_replace('!\s+!', ' ', $p['content']));
     foreach (libxml_get_errors() as $error) {
       // handle errors here
       // Here we get the structural errors in the downloaded pages.
@@ -55,21 +72,26 @@ class Indexer extends Component {
     }
     libxml_use_internal_errors(FALSE);
 
-    foreach($DOM->getElementsByTagName("h1") as $h) { 
-      //echo "\nH1 : " . $h->nodeValue; 
-    }
-    foreach($DOM->getElementsByTagName("h2") as $h) { 
-      //echo "\nH2 : " . $h->nodeValue; 
-    }
-    foreach($DOM->getElementsByTagName("h3") as $h) { 
-      //echo "\nH3 : " . $h->nodeValue; 
-    }
-    foreach($DOM->getElementsByTagName("h4") as $h) { 
-      //echo "\nH4 : " . $h->nodeValue; 
-    }
+    $xpath = new DomXPath($DOM);
 
+    $person = NULL;
+    $person_id = NULL;
+    foreach ($xpath->query('//*[@itemprop="author"]') as $rowNode) {
+      echo "Forfatter : " . $rowNode->nodeValue . "\n";
+      $person = trim($rowNode->nodeValue);
+    }
+    $r = $this->d->q("SELECT id FROM person WHERE fullname='".$person."';");
+    $person_id = $r[0]['id'];
+    if(empty($r)) {
+      $q = $this->d->exec("INSERT INTO person (fullname)" .
+		       " VALUES ('".$person."');");
+      var_dump($q, __LINE__);
+    }
+    if(!is_null($person_id)) {
+      $q = $this->d->exec("INSERT INTO person_uri (id, uri)" .
+			  " VALUES (".$person_id.", ".$uri->getId().");");
+    }
     $script = $DOM->getElementsByTagName('script');
-
     $remove = [];
     foreach($script as $item)
       {
@@ -81,14 +103,34 @@ class Indexer extends Component {
 	$item->parentNode->removeChild($item); 
       }
 
+    $tags_to_extract = array('h1', 'h2', 'h3', 'h4', 'p', 'div', 'span');
+    $headers = array();
+    foreach($tags_to_extract as $t) {
+      foreach($DOM->getElementsByTagName($t) as $h) { 
+	$v = trim($h->nodeValue);
+	if(strlen($v)) 
+	  $headers[$t][] = $v;
+      }
+    }
+    //$this->log->add(var_export($headers, TRUE));
+
     $html = $DOM->saveHTML();
 
     //asort(array_count_values(
-    $doc = strip_tags($html, "<p><br>");
+    $doc = strip_tags($html, "<p><br><a>");
+    $doc = str_replace("<p>", "", $doc);
+    $doc = str_replace("</p>", "\n\n", $doc);
+    $doc = str_replace("<br>", "\n", $doc);
+    $doc = str_replace("<br/>", "\n", $doc);
+    $doc = str_replace("<br />", "\n", $doc);
+    //echo $doc;
+
+    $sentences = $this->getSentences($doc);
+    //var_dump($sentences);
 
     // cpu...... bleeding...
     //$classifier = new Classifier(new PersistentMemory());
-    echo __LINE__;
+    echo __LINE__ . " : " . count($sentences) . " sætninger\n";
     //var_dump($classifier->guess($doc));
     $doc = $this->removeStopWords($doc);
     // TODO: stemming
@@ -242,5 +284,39 @@ class Indexer extends Component {
     $str = preg_replace('/\b('.implode('|',array_keys($language_codes)).')\b/i','',$str);
 
     return $str;
+  }
+
+  private function getSentences($doc) {
+    $re = '/# Split sentences on whitespace between them.
+    (?<=                # Begin positive lookbehind.
+      [.!?]             # Either an end of sentence punct,
+    | [.!?][\'"]        # or end of sentence punct and quote.
+    )                   # End positive lookbehind.
+    (?<!                # Begin negative lookbehind.
+      Mr\.              # Skip either "Mr."
+    | Mrs\.             # or "Mrs.",
+    | Ms\.              # or "Ms.",
+    | Jr\.              # or "Jr.",
+    | Dr\.              # or "Dr.",
+    | Prof\.            # or "Prof.",
+    | Sr\.              # or "Sr.",
+    | T\.V\.A\.         # or "T.V.A.",
+                        # or... (you get the idea).
+    )                   # End negative lookbehind.
+    \s+                 # Split on whitespace between sentences.
+    /ix';
+
+    $text = 'This is sentence one. Sentence two! Sentence thr'.
+      'ee? Sentence "four". Sentence "five"! Sentence "'.
+      'six"? Sentence "seven." Sentence \'eight!\' Dr. '.
+      'Jones said: "Mrs. Smith you have a lovely daught'.
+      'er!" The T.V.A. is a big project!';
+    
+    $sentences = preg_split($re, $doc, -1, PREG_SPLIT_NO_EMPTY);
+    for ($i = 0; $i < count($sentences); ++$i) {
+      //printf("Sentence[%d] = [%s]\n", $i + 1, $sentences[$i]);
+      //printf("Sentence[%d] = [%s]\n", $i + 1, strip_tags($sentences[$i]));
+    }
+    return $sentences;
   }
 }

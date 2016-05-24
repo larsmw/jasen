@@ -1,5 +1,7 @@
 <?php
-include_once('include/logger.php');
+include_once(ROOT . 'include/logger.php');
+include_once(ROOT . 'components/crawler/uri.php');
+include_once(ROOT . 'components/crawler/robots.txt.php');
 
 class Crawler extends Component {
   private $log;
@@ -68,8 +70,12 @@ class Crawler extends Component {
     $sql = "SELECT count(*) as num FROM crawl_domain;";
     $r = $this->d->q($sql);
     $o = "<p>Domains : " . $r[0]['num'] . "</p>";
+    $sql = "SELECT count(*) as num FROM crawl_queue;";
+    $r = $this->d->q($sql);
+    $o .= "<p>Queue size : " . $r[0]['num'] . "</p>";
+    $o .= "<p>Dato : " . date("c") . "</p>";
 
-    $sql = "SELECT * FROM cron_log where source like 'Crawler%' order by last_run desc limit 25;";
+    $sql = "SELECT * FROM cron_log order by last_run desc limit 25;";
     $r = $this->d->q($sql);
     $o .= "<dl>";
     foreach($r as $row) {
@@ -78,14 +84,13 @@ class Crawler extends Component {
       $o .= "<dd>" . $row['last_run'] . "</dd>";
     }
     $o .= "</dl>";
-    $o .= "<p>Dato : " . date("c") . "</p>";
     return array('content' => $o);
   }
 
   public function cron() {
-    $num_crawl_queue_entries = 10000;
-    $this->d->q("DELETE FROM crawl_queue WHERE id NOT IN (SELECT id FROM ( select id from crawl_queue order by id desc limit " .$num_crawl_queue_entries. " ) foo );");
-    $this->process();
+    $num_crawl_queue_entries = 1000;
+    //$this->d->q("DELETE FROM crawl_queue WHERE id NOT IN (SELECT id FROM ( select id from crawl_queue order by id desc limit " .$num_crawl_queue_entries. " ) foo );");
+    $this->process(5);
   }
 
   /*
@@ -123,7 +128,7 @@ class Crawler extends Component {
     \'errmsg\' => \'\',
     \'content\' => \' Content of webpage.
   */
-  private function process() {
+  private function process($num_urls=10) {
     echo "START\n";
     $arr_http_code_ok = array(200);
     $good_content_types = array(
@@ -133,7 +138,9 @@ class Crawler extends Component {
 				"text/html; charset=iso-8859-1",
 				"text/html;charset=iso-8859-1",
 				);
-    $uri_list = $this->getUriList(1);
+    $uri_list = $this->getUriList($num_urls);
+    //var_dump($uri_list, __LINE__);
+    //var_dump($num_urls, __LINE__);
     if (is_null($uri_list)) {
       echo "ERRORRRR -- list of urls to crawl is empty.\n";
       return;
@@ -141,27 +148,33 @@ class Crawler extends Component {
 
     foreach($uri_list as $k=>$a_uri) {
       if (is_array($a_uri)) {
-	var_dump($a_uri);
+	//var_dump($a_uri);
 	$uri = Uri::loadById($a_uri['url_id']);
       } else {
 	echo __LINE__;
 	$uri = Uri::loadById($a_uri);
       }
-      echo __LINE__;
-      var_dump($uri);
+      //echo __LINE__;
+      //var_dump($uri);
+      //var_dump($uri->getHost());
+      //$this->log->add(var_export($uri, TRUE));
 
       $this->robots = new RobotsTxt($uri->getHost());
 
       if (!$this->robots->isBlocked($uri->getPath())) {
 	if (!$this->robots->isTime()) {
+	  // too early - put it back in the queue
+	  $uri->addtoqueue();
 	  continue;
 	}
 	$this->log->add("I Will crawl : <a href=" . $uri->toString() . " target=\"_BLANK\">" . $uri->toString() . "</a>");
 	$response = $uri->fetch();
+	echo "Crawling : ".$uri->toString()." ";
 	echo "  - http:".$response['http_code']." ";
+	
 
 	if (!in_array(strtolower(trim($uri->getContentType())), $good_content_types)) {
-	  echo __LINE__;
+	  echo __LINE__ . " " . $uri->toString() . " wrong content-type : ";
 	  var_dump($uri->getContentType());
 	  continue;
 	}
@@ -184,478 +197,137 @@ class Crawler extends Component {
 	  $a = $DOM->getElementsByTagName('a');
 	  //loop through all <A> tags
 	  foreach($a as $link){
-	    $new_url = parse_url($link->getAttribute('href'));
-	    if (empty($new_url['host'])) $new_url['host'] = $uri->getHost();
-	    if (empty($new_url['scheme'])) $new_url['scheme'] = $uri->getScheme();
-	    if (empty($new_url['path'])) $new_url['path'] = "";
-	    //$this->msg("link-text : " . var_export($link->nodeValue, TRUE));
-	    //$this->msg("link : " . var_export($new_url, TRUE));
-	    $n = $new_url['scheme']."://".$new_url['host'].$new_url['path'];
-	    $u = new Uri($n);
+	    //var_dump($link, __LINE__);
+	    //var_dump($uri->toString(), __LINE__);
+	    if (is_string($link)) {
+	      //var_dump($link);
+	      $u = new Uri($link, $uri->toString());
+	    }
+	    else {
+	      //var_dump($link->getAttribute('href'));
+	      $u = new Uri($link->getAttribute('href'), $uri->toString());
+	    }
 	    $u->addtoqueue();
 	  }
-	  echo "trigger index\n";
 	  Events::trigger('content', 'index', 
-			  ['content' => $response['content']]);
+			  ['content' => $response['content'], 'uri' => $uri ]);
+	  $a = $DOM->getElementsByTagName('img');
+	  //get images...
+	  foreach($a as $img){
+	    //var_dump($img, __LINE__);
+	    //var_dump($img->getAttribute('src'));
+	    $img_path = $img->getAttribute('src');
+	    // parse the path into its constituent parts
+	    $url_info = parse_url($img_path);
+	    
+	    // if the host part (or indeed any part other than "path") is set,
+	    // then we're dealing with a fully qualified URL (or possibly an error)
+	    if (!isset($url_info['host'])) {
+	      // otherwise, get the relative path
+	      $path = $url_info['path'];
+	      
+	      // and ensure it begins with a slash
+	      if (substr($path,0,1) !== '/') $path = '/'.$path;
+	      
+	      // concatenate the site directory with the relative path
+	      $img_path = $path;
+	      if (substr($img_path,0,2) == "//") {
+		$img_path = "http:" . $img_path;
+	      }
+	    }
+	    file_put_contents("files/images/".$uri->getId()."-".basename($img_path),
+			      file_get_contents($img_path));
+	    //var_dump(basename($img_path));  // this should be a full URL 
+	  }
 	}
 	else {
-	  echo __LINE__;
-	  var_dump($response['http_code']);
+	  //var_dump($response['http_code'], __LINE__);
 	}
       }
       else {
 	// url is blocked by robots!?
-	$this->log->add("This is blocked : <a href=" . $uri . ">" . $uri . "</a>");
-	echo " Blocked!";
+	$this->log->add("This is blocked : <a href=" . $uri->toString() . ">" . $uri->toString() . "</a>");
+	echo " Blocked! : " . $uri->toString();
       }
+      //var_dump($uri->toString());
       echo "\n";
     }
     echo "DONE\n";
   }
 
-  private function getUriList($count = 1) {
-    $delay = 30;
+  private function getUriList($count = 5) {
+    $delay = 1800;
+    $return = array();
+    //var_dump($count, __LINE__);
     $sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=2 group by q.did order by time_to_crawl asc limit " . $count . ";";
     $r = $this->d->q($sql);
-    if (empty($r)) {
-      //return array("https://en.wikipedia.org/wiki/Main_Page");
+    //var_dump($r);
+    foreach($r as $url) {
+      //var_dump($url, __LINE__);
+      $d = $this->d->q("delete from crawl_queue where url_id=" . $url['url_id'] . ";");
+    }
+    if (empty($r) || (count($r)<$count) ) {
+      $count = $count - count($r);
+      //var_dump($count, "count");
       $sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=1 group by q.did order by time_to_crawl asc limit " . $count . ";";
       $r = $this->d->q($sql);
-      if (empty($r)) {
+      //var_dump($r, __LINE__);
+      $return = array_merge($return, $r);
+      foreach($r as $url) {
+	//var_dump($url, __LINE__);
+	$d = $this->d->q("delete from crawl_queue where url_id=" . $url['url_id'] . ";");
+      }
+      if (empty($r) || (count($r)<$count) ) {
+	$count = $count - count($r);
+	//var_dump($count, "count");
 	$sql = "select q.id, q.url_id from crawl_queue q WHERE q.priority=0 group by q.did order by time_to_crawl asc limit " . $count . ";";
 	$r = $this->d->q($sql);
-	if (empty($r)) {
-	  return null;
-	} else {
+	//var_dump($r, __LINE__);
+      $return = array_merge($return, $r);
+	foreach($r as $url) {
+	  //var_dump($url, __LINE__);
+	  $d = $this->d->q("delete from crawl_queue where url_id=" . $url['url_id'] . ";");
+	}
+	if (empty($r) || (count($r)<$count) ) {
+	  $count = $count - count($r);
+	  //var_dump($count, "count");
+	  $sql = "select q.id as url_id, q.domain_id from crawl_queue q group by q.domain_id order by q.id asc limit " . $count . ";";
+	  $r = $this->d->q($sql);
+	  //$this->log->add("Could not get " . $count . " items to crawl...");
+	  //$this->log->add("Loaded :  " . var_export($r, TRUE));
+      $return = array_merge($return, $r);
 	  foreach($r as $url) {
-	    //var_dump($url);
+	    //var_dump($url, __LINE__);
 	    $d = $this->d->q("delete from crawl_queue where url_id=" . $url['url_id'] . ";");
 	  }
+	} else {
+      $return = array_merge($return, $r);
+	  foreach($r as $url) {
+	    //var_dump($url, __LINE__);
+	    $d = $this->d->q("delete from crawl_queue where url_id=" . $url['url_id'] . ";");
+	    //var_dump($d);
+	  }
 	  //echo "prio=0\n";
-	  return $r;
 	}
       } else {
+      $return = array_merge($return, $r);
 	foreach($r as $url) {
-	  //var_dump($url);
+	  //var_dump($url, __LINE__);
 	  $d = $this->d->q("delete from crawl_queue where url_id=" . $url['url_id'] . ";");
+	  //var_dump($d);
 	}
 	//echo "prio=1\n";
 	return $r;
-      }
+	}
     } else {
+      $return = array_merge($return, $r);
       foreach($r as $url) {
-	//var_dump($url);
+	//var_dump($url, __LINE__);
 	$d = $this->d->q("delete from crawl_queue where url_id=" . $url['url_id'] . ";");
+	//var_dump($d);
       }
       //echo "prio=2\n";
-      return $r;
     }
-  }
-
-}
-
-class Uri {
-
-  private $uri;
-  private $uri_parts;
-  private $content_type;
-  protected $d;
-
-  public function __construct($url) {
-    $this->uri = $url;
-    $this->uri_parts = parse_url($url);
-    if(empty($this->uri_parts['path'])) $this->uri_parts['path'] = "/";
-    $this->d = new Database();
-  }
-
-  public function toString() {
-    return $this->uri;
-  }
-
-  public function getHost() {
-    return $this->uri_parts['host'];
-  }
-
-  public function getScheme() {
-    return $this->uri_parts['scheme'];
-  }
-
-  public function getPath() {
-    return $this->uri_parts['path'];
-  }
-
-  public function getContentType() {
-    return $this->content_type;
-  }
-
-  public function loadById($id) {
-    $d = new Database();
-    /*SELECT * FROM linkhub.crawl_uri u inner join crawl_domain d on u.domain_id=d.id WHERE u.id=13423;*/
-    $sql = "SELECT * FROM linkhub.crawl_uri u inner join";
-    $sql .= " crawl_domain d on u.domain_id=d.id WHERE u.id=".$id.";";
-    $r = $d->q($sql);
-    return new Uri($r[0]['scheme']."://".$r[0]['name'].$r[0]['path']);
-  }
-
-  private function getUrlID($url) {
-    $tmp = parse_url($url);
-    if(empty($tmp['host'])) throw new Exception("missing host :" . 
-		   var_export($tmp, TRUE));
-    //$tmp['host'] = $base['host'];
-    //$this->msg($url);
-    //$tmp['scheme'] = $this->getSchemeID($tmp['scheme']);
-    $tmp['host'] = $this->getDomainID($tmp['host']);
-    if(!isset($tmp['path'])) $tmp['path'] = '/';
-    $ret[] = $tmp;
-    
-    $r = $this->d->q("SELECT id FROM crawl_uri WHERE path='".$tmp['path'].
-			       "' AND domain_id=".$tmp['host'].
-			       " AND scheme='".$tmp['scheme'].
-			       "';");
-    if(empty($r)) {
-      $q = $this->d->exec("INSERT INTO crawl_uri (path,domain_id,scheme)" .
-		       " VALUES ('".$tmp['path']."', '".$tmp['host']."', '".$tmp['scheme'].
-		       "');");
-    }
-    else {
-      return $r[0]['id'];
-    }
-  }
-  
-  private function getDomainID($domain) {
-    $sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
-    $r = $this->d->q($sql);
-    if(count($r)===0) {
-      $sql = "INSERT INTO crawl_domain (name) VALUES ('".$domain."');";
-      $id = $this->d->insert($sql);
-      /*echo __LINE__;
-      var_dump($domain);
-      echo __LINE__;
-      var_dump($id);*/
-      //$sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
-      //$r = $this->d->q($sql);
-      return $id;
-    }
-    else {
-      return $r[0]['id'];
-    }
-  }
-  
-  private function getSchemeID($scheme) {
-    if ($scheme === 'http') { return 0; }
-    if ($scheme === 'https') { return 1; }
-    $sql = "SELECT id,name FROM protocols WHERE 'name' = '$scheme';";
-    $r = $this->d->fetchAssoc($sql);
-    if( !is_array($r) || count($r)===0 ) {
-      $sql = "INSERT INTO protocols (name) VALUES ($scheme)";
-      $q = $this->d->insert($sql);
-      throw new Exception("Scheme dont exitst.... creating... try again");
-    }
-    else {
-      return $r[0]['id'];
-    }
-  }
-
-  public function fetch() {
-    $user_agent='Mozilla/5.0 (Windows NT 6.1; rv:8.0) Gecko/20100101 Firefox/8.0';
-
-    $options = array(
-		     
-		     CURLOPT_CUSTOMREQUEST  => "GET",        //set request type post or get
-		     CURLOPT_POST           => false,        //set to GET
-		     CURLOPT_USERAGENT      => $user_agent, //set user agent
-		     CURLOPT_COOKIEFILE     => "cookie.txt", //set cookie file
-		     CURLOPT_COOKIEJAR      => "cookie.txt", //set cookie jar
-		     CURLOPT_RETURNTRANSFER => true,     // return web page
-		     CURLOPT_HEADER         => false,    // don't return headers
-		     CURLOPT_FOLLOWLOCATION => true,     // follow redirects
-		     CURLOPT_ENCODING       => "",       // handle all encodings
-		     CURLOPT_AUTOREFERER    => true,     // set referer on redirect
-		     CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
-		     CURLOPT_TIMEOUT        => 120,      // timeout on response
-		     CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
-		     );
-    
-    $ch      = curl_init( $this->uri );
-    curl_setopt_array( $ch, $options );
-    $content = curl_exec( $ch );
-    $err     = curl_errno( $ch );
-    $errmsg  = curl_error( $ch );
-    $header  = curl_getinfo( $ch );
-    curl_close( $ch );
-    
-    $header['errno']   = $err;
-    $header['errmsg']  = $errmsg;
-    $header['content'] = $content;
-    
-    $this->content_type = $header['content_type'];
-
-    $uid = $this->getUrlID($this->uri);
-    $did = $this->getDomainID($this->uri_parts['host']);
-    $sql = "INSERT INTO crawl_stats (url_id, domain_id, fetch_time) VALUES ($uid, $did, " .
-      $header['total_time'] . ")";
-    $q = $this->d->insert($sql);
-
-    return $header;
-  }
-
-  public function addtoqueue() {
-    $sql = "SELECT count(*) as num FROM crawl_queue;";
-    $r = $this->d->q($sql);
-    if ($r[0]['num'] > 1000) {
-      //$this->log->add("Did not add '" . $url . "' to queue.");
-      return;
-    }
-
-    if (strstr($this->uri, "wikipedia.org") ||
-	strstr($this->uri, "wikinews.org") ||
-	strstr($this->uri, "mediawiki.org") ||
-	strstr($this->uri, "wikiquote.org") ||
-	strstr($this->uri, "wikidata.org") ||
-	strstr($this->uri, "wikimediafoundation.org")
-	) {
-      // std priority is 1
-      $priority = 0;
-    } else if (strstr($this->uri, ".dk")) {
-      $priority = 2;
-    }
-    else {
-      $priority = 1;
-    }
-    $url_id = $this->getUrlID($this->uri);
-    $sql = "SELECT id FROM crawl_queue WHERE url_id = $url_id;";
-    $r = $this->d->q($sql);
-
-    if( count($r)==0 ) {
-      $tmp = parse_url($this->uri);
-      $did = $this->getDomainID($tmp['host']);
-      $sql = "INSERT INTO crawl_queue (url_id, did, priority) VALUES ($url_id, $did, $priority)";
-      $q = $this->d->exec($sql);
-      //$this->msg("Added " . $n . " to queue.");
-    }
-    else {
-      //$this->log->add("Did not add '" . $url . "' to queue.");
-    }
-  }
-
-}
-
-class RobotsTxt {
-  
-  private $_domain   = null;
-  private $_rules    = array();
-  
-  public function __construct($domain) {
-    $this->log = new Logger();
-    $d = new Database();
-
-    if (!$d->tableExists("robots")) {
-      $sql = "CREATE TABLE robots ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
-	"did INT NOT NULL, " .
-	"delay INT NOT NULL DEFAULT 15," . 
-	"data TEXT, " .
-	"last_fetch TIMESTAMP);";
-      $d->exec($sql);
-    }
-
-
-    $this->_domain = $domain;
-    $this->_rules = NULL;
-    $up = parse_url($domain);
-    $did = $this->getDomainID($up['host']);
-    // TODO: add cache age for fetch.
-    $r = $d->q("SELECT id FROM robots WHERE did like '$did' limit 1;");
-    if (count($r) < 1) {
-       try {
-	$robotsTxt     = $this->downloadUrl($domain.'/robots.txt');
-	if(!$robotsTxt) return FALSE;
-	$this->_rules  = $this->_makeRules($robotsTxt);
-	$sql = "INSERT INTO robots (did, data, delay) " .
-	  "VALUES (:did, :data, :delay)";
-	
-	$this->log->add("Fetched robots.txt from " . $domain . " : " . var_export($sql, TRUE));
-
-	$params = array('did' => $did,
-			'data' => serialize($this->_rules), 
-			'delay' => $this->_rules['crawl-delay']);
-	$d->execute($sql, $params);
-	
-      } catch (Exception $e) {
-	 // Could not fetch robots.txt
-	 // All is allowed.
-      }
-    }
-    else {
-      // load from db
-      $r = $d->q("SELECT * FROM robots WHERE did like '$did' limit 1;");
-      $this->_rules = unserialize(array_pop($r)['data']);
-    }
-  }
-  
-  public function downloadUrl($url) {
-      $ch = curl_init();
-      curl_setopt($ch, CURLOPT_HEADER, 0);
-      curl_setopt($ch, CURLOPT_VERBOSE, 0);
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-      curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/4.0 (compatible;)");
-      curl_setopt($ch, CURLOPT_URL, ($url));
-      $response = curl_exec($ch);
-      curl_close($ch);
-      return $response;
-  }
-  
-  /**
-   * testet eine url gegen die Regeln der aktuellen robots.txt und
-   * gibt zurück, ob sie blockiert ist.
-   */
-  public function isBlocked($url, $userAgent = '*') {
-    /**
-     * update: nach dem Hinweis von Naden aus den Kommentaren
-     * habe ich die nächsten sieben Zeilen geändert.
-     */
-    if (!isset($this->_rules[$userAgent])) {
-      $rules = isset($this->_rules['*']) ?
-	$this->_rules['*'] : array();
-    } else {
-      $rules = $this->_rules[$userAgent];
-    }
-    
-    if (count($rules) == 0) {
-      return false;
-    }
-    
-    // von der URL interessiert uns nur der Teil hinter dem Host
-    $urlArray  = parse_url($url);
-    if (isset($urlArray['path'])) {
-      
-      $url = $urlArray['path'];
-      
-      if (isset($urlArray['query'])) {
-	$url .= '?'.$urlArray['query'];
-      }
-      
-      if (isset($urlArray['fragment'])) {
-	$url .= '#'.$urlArray['fragment'];
-      }
-    }
-    
-    // wenn keine der Regeln passt, ist der Zugriff erlaubt
-    $blocked  = false;
-    /* wir merken uns die Länge der längsten Regel, weil sie sich gegen
-       alle anderen durchsetzt
-    */
-    $longest  = 0;
-    
-    foreach ($rules as $r) {
-      if (preg_match($r['path'], $url) && (strlen($r['path']) >= $longest)) {
-	$longest  = strlen($r['path']);
-	$blocked  = !($r['allow']);
-      }
-    }
-    $this->_makeRules($longest);
-    
-    return $blocked;
-  }
-  
-  /**
-   * erstellt ein Array mit den Regeln aus einer gegebenen robots.txt
-   */
-  private function _makeRules($robotsTxt) {
-    $rules  = array();
-    $lines  = explode("\n", $robotsTxt);
-    $default_delay = 10;      
-    // verwirf alle Zeile ohne Dis-/allow Anweisung oder Angabe des User-Agents
-    $lines  = array_filter($lines, function ($l) {
-	return (preg_match('#^((dis)?allow|user-agent)[^:]*:.+#i', $l) > 0);
-      });
-    
-    $userAgent = '';
-    foreach ($lines as $l) {
-      list($first, $second) = explode(':',$l);
-      $first   = trim($first);
-      $second  = trim($second);
-      
-      if (preg_match('#^user-agent$#i', $first)) {
-	$userAgent = $second;
-      } else {
-	if ($userAgent) {
-	  $pathRegEx  = $this->_getRegExByPath($second);
-	  $allow      = (preg_match('#^dis#i', $first) !== 1);
-          
-	  $rules[$userAgent][] = array (
-					'path'  => $pathRegEx,
-					'allow' => $allow,
-					);
-	}
-      }
-      if(strcmp(strtolower($first), 'crawl-delay')) {
-          $rules['crawl-delay'] = (float)(($second==0)?$default_delay:$second);
-      }
-    } 
-    if (!isset($rules['crawl-delay'])) 
-      $rules['crawl-delay'] = $default_delay;
-    return $rules;
-  }
-
-  /*
-   * Is it time for next crawl?
-   * @return: bool
-   */
-  public function isTime() {
-    $d = new Database();
-    $url_parts = parse_url($this->_domain);
-    $did = $this->getDomainId($url_parts['host']);
-    $sql = "SELECT * FROM crawl_stats WHERE domain_id='".$did."' order by time_crawled desc limit 1;";
-    $r = $d->q($sql);
-    if (empty($r)) {
-
-      echo "First visit : " . $this->_domain . "\n";
-      return TRUE;
-    }
-    $visit = strtotime($r[0]['time_crawled']);
-    $now = strtotime(date('c'));
-    if (($now - $visit) > $this->_rules['crawl-delay']) {
-      // ok, we have waited enough.
-      echo "crawl-delay : " . $this->_rules['crawl-delay'] . "\n";
-      return TRUE;
-    }
-    else {
-      echo "Too early to crawl : " . $this->_domain . " Delay : ".$this->_rules['crawl-delay']."\n";
-      return FALSE;
-    }
-  }
-  /**
-   * ermittle den RegEx, der auf die Pfad-Angabe aus der robots.txt pass
-   */
-  private function _getRegExByPath($path) {
-    $regEx  = '';
-    $path   = trim($path);
-    
-    // entschärfe Sonderzeichen
-    $regEx  = preg_replace('#([\^+?.()])#','\\\\$1', $path);
-    // Sternchen steht für beliebig viele beliebige Zeilen
-    $regEx  = str_replace('*', '.*', $regEx);
-    
-    return '#'.$regEx.'#';
-  }
-  
-  private function getDomainID($domain) {
-    $d = new Database();
-    $sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
-    $r = $d->q($sql);
-    if(count($r)===0) {
-      $sql = "INSERT INTO crawl_domain (name) VALUES ('".$domain."');";
-      $id = $d->insert($sql);
-      /*echo __LINE__;
-      var_dump($domain);
-      echo __LINE__;
-      var_dump($id);*/
-      //$sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
-      //$r = $this->d->q($sql);
-      return $id;
-    }
-    else {
-      return $r[0]['id'];
-    }
+    return $return;
   }
 }

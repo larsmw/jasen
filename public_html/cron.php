@@ -1,8 +1,16 @@
 <?php
+/**
+ * This file initiates a cron run. Sets up basic database and starts cron.
+ */
 
+/**
+ * Basic security. Dont call this file from web.
+ */
 if (php_sapi_name() != "cli") {
   die("call me from cli...");
 }
+
+define('ROOT', __DIR__ .'/');
 
 include_once('include/core.php');
 include_once('include/events.php');
