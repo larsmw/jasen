@@ -37,6 +37,16 @@ class Crawler extends Component {
       $this->d->exec($sql);
     }
 
+    if (!$this->d->tableExists("link_text")) {
+      $sql = "CREATE TABLE link_text ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
+           "name VARCHAR(4096));";
+      $this->d->exec($sql);
+    }
+    if (!$this->d->tableExists("link")) {
+      $sql = "CREATE TABLE link ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
+           "src INT NOT NULL, dst INT NOT NULL, link_text INT, last_visit TIMESTAMP);";
+      $this->d->exec($sql);
+    }
 
   }
 
@@ -200,12 +210,35 @@ class Crawler extends Component {
 	    //var_dump($link, __LINE__);
 	    //var_dump($uri->toString(), __LINE__);
 	    if (is_string($link)) {
-	      //var_dump($link);
+	      echo "SHOULD NOT HAPPEN!!!\n\n";
+	      var_dump($link);
 	      $u = new Uri($link, $uri->toString());
 	    }
 	    else {
-	      //var_dump($link->getAttribute('href'));
+	      $url = $link->getAttribute('href');
+	      $text = trim($link->textContent);
+
+
+	      $sql = "SELECT id,name FROM link_text WHERE name like '$text';";
+	      $r = $this->d->q($sql);
+	      $text_id = -1;
+	      if(count($r)===0) {
+		$sql = "INSERT INTO link_text (name) VALUES ('".$text."');";
+		$text_id = $this->d->insert($sql);
+	      }
+	      else {
+		$text_id = $r[0]['id'];
+	      }
+	      //var_dump($text_id);
+	      //var_dump($uri->getId());
+
+
+
 	      $u = new Uri($link->getAttribute('href'), $uri->toString());
+	      //var_dump($u->getId());
+	      $sql = "INSERT INTO link (src,dst,link_text,last_visit) VALUES (".
+		$uri->getId().", ".$u->getId().", ".$text_id.", NOW());";
+	      $link_id = $this->d->insert($sql);
 	    }
 	    $u->addtoqueue();
 	  }
@@ -331,3 +364,4 @@ class Crawler extends Component {
     return $return;
   }
 }
+

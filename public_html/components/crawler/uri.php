@@ -193,7 +193,7 @@ class Uri {
       // std priority is 1
       $priority = 0;
     } else if (strstr($this->uri, ".dk")) {
-      $priority = 2;
+      $priority = 1;
     }
     else {
       $priority = 1;
