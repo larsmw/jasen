@@ -288,6 +288,7 @@ class Crawler extends \Base implements \Plugin {
 
 
         $run = true;
+	// change this to regexes..
         switch($headers[0]) {
           case 'HTTP/1.1 301 Moved Permanently' :
           case 'HTTP/1.1 301 MOVED PERMANENTLY' :
