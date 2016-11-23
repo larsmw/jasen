@@ -1,14 +1,10 @@
 <?php
-/**
- * A search engine.
- */
 
-/**
- * Set very basic settings.
- */
-date_default_timezone_set("Europe/Copenhagen");
+require_once 'includes/common.inc';
 
-define('ROOT', __DIR__ .'/');
-include ROOT . 'include/core.php';
+$a = new App();
+$a->run();
 
-$c = new Core();
+
+exit();
+

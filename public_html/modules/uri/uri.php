@@ -1,5 +1,5 @@
 <?php
-
+namespace LinkHub\Modules;
 
 class Uri {
 
@@ -7,7 +7,7 @@ class Uri {
   private $uri_parts;
   private $content_type;
   private $log;
-  private $id;
+  private $id, $did;
   protected $d;
 
   public function __construct($url, $uri=NULL) {
@@ -24,10 +24,10 @@ class Uri {
       $this->uri_parts['scheme'] = $uri->getScheme();
     if (empty($this->uri_parts['path'])) 
       $this->uri_parts['path'] = '/';
+    $this->getDomainID($this->uri_parts['host']);
     //var_dump($this->uri);
     //var_dump($this->uri_parts);
-    $this->d = new Database();
-    $this->log = new Logger();
+    $this->d = new \Database();
     $this->id = $this->getUrlID($this->uri);
   }
 
@@ -58,13 +58,13 @@ class Uri {
   public function loadById($id) {
     $d = new Database();
     /*SELECT * FROM linkhub.crawl_uri u inner join crawl_domain d on u.domain_id=d.id WHERE u.id=13423;*/
-    $sql = "SELECT * FROM linkhub.crawl_uri u inner join";
-    $sql .= " crawl_domain d on u.domain_id=d.id WHERE u.id=".$id.";";
+    $sql = "SELECT * FROM uri u inner join";
+    $sql .= " uri_domain d on u.domain_id=d.id WHERE u.id=".$id.";";
     $r = $d->q($sql);
     return new Uri($r[0]['scheme']."://".$r[0]['name'].$r[0]['path']);
   }
 
-  private function getUrlID($url) {
+  public function getUrlID($url) {
     $tmp = parse_url($url);
     if(empty($tmp['host']) ) {
       return NULL;
@@ -81,12 +81,12 @@ class Uri {
     if(!isset($tmp['path'])) $tmp['path'] = '/';
     $ret[] = $tmp;
     
-    $r = $this->d->q("SELECT id FROM crawl_uri WHERE path='".$tmp['path'].
+    $r = $this->d->fetchAssoc("SELECT id FROM uri WHERE path='".$tmp['path'].
 			       "' AND domain_id=".$tmp['host'].
 			       " AND scheme='".$tmp['scheme'].
 			       "';");
     if(empty($r)) {
-      $q = $this->d->exec("INSERT INTO crawl_uri (path,domain_id,scheme)" .
+      $q = $this->d->exec("INSERT INTO uri (path,domain_id,scheme)" .
 		       " VALUES ('".$tmp['path']."', '".$tmp['host']."', '".$tmp['scheme'].
 		       "');");
     }
@@ -95,22 +95,26 @@ class Uri {
     }
   }
   
-  private function getDomainID($domain) {
-    $sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
-    $r = $this->d->q($sql);
-    if(count($r)===0) {
-      $sql = "INSERT INTO crawl_domain (name) VALUES ('".$domain."');";
-      $id = $this->d->insert($sql);
-      /*echo __LINE__;
-      var_dump($domain);
-      echo __LINE__;
-      var_dump($id);*/
-      //$sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
-      //$r = $this->d->q($sql);
-      return $id;
-    }
-    else {
-      return $r[0]['id'];
+  public function getDomainID($domain="") {
+    $d = new \Database();
+    if (empty($domain) && isset($this->did)) {
+      return $this->did;
+    } else {
+      if (empty($domain)) {
+        //throw new \Exception("Domainname missing" . var_export($this, TRUE));
+        $domain = $this->uri_parts['host'];
+      }
+      $sql = "SELECT id,name FROM uri_domain WHERE name like '$domain';";
+      $r = $d->fetchAssoc($sql);
+      if(count($r)===0) {
+        $sql = "INSERT INTO uri_domain (name) VALUES ('".$domain."');";
+        $id = $d->exec($sql);
+        $this->did = $id;
+        return $id;
+      }
+      else {
+        return $r[0]['id'];
+      }
     }
   }
   
@@ -121,7 +125,7 @@ class Uri {
     $r = $this->d->fetchAssoc($sql);
     if( !is_array($r) || count($r)===0 ) {
       $sql = "INSERT INTO protocols (name) VALUES ($scheme)";
-      $q = $this->d->insert($sql);
+      $q = $this->d->exec($sql);
       throw new Exception("Scheme dont exitst.... creating... try again");
     }
     else {
@@ -167,9 +171,9 @@ class Uri {
     $uid = $this->getUrlID($this->uri);
     $did = $this->getDomainID($this->uri_parts['host']);
     file_put_contents("files/" . $uid, $content);
-    $sql = "INSERT INTO crawl_stats (url_id, domain_id, fetch_time) VALUES ($uid, $did, " .
-      $header['total_time'] . ")";
-    $q = $this->d->insert($sql);
+    $sql = "INSERT INTO crawl_stats (url_id, domain_id, fetch_time, time_crawled) VALUES ($uid, $did, " .
+      $header['total_time']*1000 . ", NOW())";
+    $q = $this->d->exec($sql);
 
     return $header;
   }
@@ -220,4 +224,3 @@ class Uri {
   }
 
 }
-

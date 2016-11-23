@@ -1,28 +1,10 @@
 <?php
-/**
- * This file initiates a cron run. Sets up basic database and starts cron.
- */
 
-/**
- * Basic security. Dont call this file from web.
- */
-if (php_sapi_name() != "cli") {
-  die("call me from cli...");
-}
+require_once 'includes/common.inc';
+require_once 'modules/crawler/crawler.php';
+require_once 'includes/daemon.inc';
 
-define('ROOT', __DIR__ .'/');
+use LinkHub\Modules\Crawler as Crawler;
 
-include_once('include/core.php');
-include_once('include/events.php');
-include_once('include/database.php');
-
-$c = new Core();
-$d = new Database();
-
-$r = $d->q("SELECT id FROM cron_log limit 1;");
-if (empty($r)) {
-  $sql = "CREATE TABLE cron_log ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, source VARCHAR(1024) NOT NULL, message TEXT, last_run TIMESTAMP);";
-  $d->exec($sql);
-}
-
-Events::trigger('core', 'cron', array());
+$daemon = new Daemon(80,80, new Crawler());
+$daemon->main($argv);

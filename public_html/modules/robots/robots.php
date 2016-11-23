@@ -1,89 +1,68 @@
 <?php
 
+namespace LinkHub\Modules;
 
-class RobotsTxt {
+class robots {
   
-  private $_domain   = null;
+  private $_uri   = null;
   private $did;
   private $_rules    = array();
   
-  public function __construct($domain) {
-    $this->log = new Logger();
-    $d = new Database();
+  public function __construct(&$uri) {
+    $d = new \Database();
 
-    if (!$d->tableExists("robots")) {
-      $sql = "CREATE TABLE robots ( id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " .
-	"did INT NOT NULL, " .
-	"delay INT NOT NULL DEFAULT 15," . 
-	"data TEXT, " .
-	"last_fetch TIMESTAMP);";
-      $d->exec($sql);
-    }
-
-
-    $this->_domain = $domain;
+    $this->_uri = $uri;
     $this->_rules = NULL;
-
-    $this->did = $this->getDomainID($domain);
+    $this->did = $uri->getDomainID();
     // TODO: add cache age for fetch.
-    $r = $d->q("SELECT * FROM robots WHERE did like '$this->did' limit 1;");
+    $r = $d->fetchAssoc("SELECT * FROM robots WHERE did like '$this->did' limit 1;");
     if (count($r) < 1) {
-       try {
-	$robotsTxt     = $this->downloadUrl($domain.'/robots.txt');
-	if(!$robotsTxt) return FALSE;
-	$this->_rules  = $this->_makeRules($robotsTxt);
-
-	/*$sql = "INSERT INTO robots (did, data, delay) " .
-	  "VALUES (:did, :data, :delay)";
-	
-
-	$params = array('did' => $this->did,
-			'data' => serialize($this->_rules), 
-			'delay' => $this->_rules['crawl-delay']);
-			$d->execute($sql, $params);*/
-	$this->save();
-	//$this->log->add("Fetched robots.txt from " . $domain . " : " . var_export($sql, TRUE));
-	
-      } catch (Exception $e) {
-	 // Could not fetch robots.txt
-	 // All is allowed.
-      }
+      $this->update();
     }
     else {
       // load from db
-      //$this->log->add("In DB - robots.txt from " . $domain . " : " . var_export($r, TRUE));
-      $this->_rules = unserialize(array_pop($r)['data']);
-      //$this->log->add("loaded - robots.txt from " . $domain . " : " . var_export($this->_rules, TRUE));
-      /*      if ( //last fetch too long ago
-	  strtotime($this->_rules[
- ) {
-	$robotsTxt     = $this->downloadUrl($domain.'/robots.txt');
-	$this->_rules  = $this->_makeRules($robotsTxt);
-	$this->save();
-	}*/
+      if (strtotime($r[0]['last_fetch']) > (time() - 12*60*60)) {
+        // robots.txt is less than 12 hours old
+        $this->_rules = unserialize(array_pop($r)['data']);
+      }
+      else {
+        // update robots.txt
+        $this->update();
+      }
     }
   }
 
-  private function save() {
-    $d = new Database();
-    $r = $d->q("SELECT * FROM robots WHERE did like '$this->did' limit 1;");
-    if (count($r) < 1) {
-      $sql = "INSERT INTO robots (did, data, delay) " .
-	"VALUES (:did, :data, :delay)";
+  private function update() {
+    try {
+      $robotsTxt = $this->downloadUrl($this->_uri->getScheme()."://" .
+                   $this->_uri->getHost().'/robots.txt');
+      if(!$robotsTxt) return FALSE;
+      $this->_rules  = $this->_makeRules($robotsTxt);
+      $this->save();
       
-      $params = array('did' => $this->did,
-		      'data' => serialize($this->_rules), 
-		      'delay' => $this->_rules['delay']);
-      $d->execute($sql, $params);
-      //$this->log->add("saved new robots.txt in db from " . $this->_domain . " : " . var_export($r, TRUE));
+    } catch (Exception $e) {
+      // Could not fetch robots.txt
+      // All is allowed.
+    }
+  }
+  
+  private function save() {
+    $d = new \Database();
+    $r = $d->fetchAssoc("SELECT * FROM robots WHERE did like '".$this->_uri->getDomainID()."' limit 1;");
+    if (count($r) < 1) {
+      $sql = "INSERT INTO robots (did, data, delay) VALUES (".$this->_uri->getDomainID().
+           ", '".serialize($this->_rules)."', ".$this->_rules['delay'].")";
+      
+      $d->exec($sql);
+      var_dump("saved robots");
     }
     else {
       $sql = "UPDATE robots set data='" . serialize($this->_rules) 
-	. "', delay='" . $this->_rules['delay'] . "') " .
+	. "', delay='" . $this->_rules['delay'] . "' " .
 	"WHERE did=" . $this->did . ";";
       
       $d->exec($sql);
-      $this->log->add("updated robots.txt in db from " . $this->_domain . " : " . var_export($r, TRUE));
+      var_dump("updated robots");
     }
   }
   
@@ -110,7 +89,7 @@ class RobotsTxt {
      */
     if (!isset($this->_rules[$userAgent])) {
       $rules = isset($this->_rules['*']) ?
-	$this->_rules['*'] : array();
+             $this->_rules['*'] : array();
     } else {
       $rules = $this->_rules[$userAgent];
     }
@@ -126,11 +105,11 @@ class RobotsTxt {
       $url = $urlArray['path'];
       
       if (isset($urlArray['query'])) {
-	$url .= '?'.$urlArray['query'];
+        $url .= '?'.$urlArray['query'];
       }
       
       if (isset($urlArray['fragment'])) {
-	$url .= '#'.$urlArray['fragment'];
+        $url .= '#'.$urlArray['fragment'];
       }
     }
     
@@ -143,8 +122,8 @@ class RobotsTxt {
     
     foreach ($rules as $r) {
       if (preg_match($r['path'], $url) && (strlen($r['path']) >= $longest)) {
-	$longest  = strlen($r['path']);
-	$blocked  = !($r['allow']);
+        $longest  = strlen($r['path']);
+        $blocked  = !($r['allow']);
       }
     }
     $this->_makeRules($longest);
@@ -191,25 +170,27 @@ class RobotsTxt {
       $rules['delay'] = $default_delay;
     return $rules;
   }
-
   /*
    * Is it time for next crawl?
    * @return: bool
    */
   public function isTime() {
-    $d = new Database();
+    $d = new \Database();
     $nice_margin = 1800; // wait X seconds between visits.
-    $url_parts = parse_url($this->_domain);
+    $url_parts = parse_url($this->_uri->getHost());
     //$did = $this->getDomainId($this->_domain);
-    $sql = "SELECT * FROM crawl_stats WHERE domain_id='".$this->did."' order by time_crawled desc limit 1;";
-    $r = $d->q($sql);
+    $sql = "SELECT * FROM crawl_stats WHERE domain_id=".$this->_uri->getDomainID()." order by time_crawled desc limit 1;";
+    $r = $d->fetchAssoc($sql);
+    //var_dump($this->_uri->getDomainID());
+    //var_dump($r);
     if (empty($r)) {
-
       //echo "First visit : " . $this->_domain . "\n";
       return TRUE;
     }
     $visit = strtotime($r[0]['time_crawled']);
     $now = strtotime(date('c'));
+    //var_dump($visit);
+    //var_dump($now);
     if (!isset($this->_rules['delay'])) {
       $this->_rules['delay'] = 10;
       $this->save();
@@ -220,8 +201,6 @@ class RobotsTxt {
       return TRUE;
     }
     else {
-      $this->log->add("Too early to crawl : " . $this->_domain . 
-		      " Delay : ".$this->_rules['delay']."\n");
       return FALSE;
     }
   }
@@ -240,23 +219,4 @@ class RobotsTxt {
     return '#'.$regEx.'#';
   }
   
-  private function getDomainID($domain) {
-    $d = new Database();
-    $sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
-    $r = $d->q($sql);
-    if(count($r)===0) {
-      $sql = "INSERT INTO crawl_domain (name) VALUES ('".$domain."');";
-      $id = $d->insert($sql);
-      /*echo __LINE__;
-      var_dump($domain);
-      echo __LINE__;
-      var_dump($id);*/
-      //$sql = "SELECT id,name FROM crawl_domain WHERE name like '$domain';";
-      //$r = $this->d->q($sql);
-      return $id;
-    }
-    else {
-      return $r[0]['id'];
-    }
-  }
 }
