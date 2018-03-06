@@ -177,7 +177,7 @@ class myApp extends \App\Application {
 }
 
 var_dump(time());
-echo "1";
+echo "12";
 
 try {
     $m = new myApp();
