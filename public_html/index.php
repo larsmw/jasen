@@ -176,7 +176,6 @@ class myApp extends \App\Application {
 
 }
 
-var_dump(time());
 echo "12";
 
 try {
