@@ -1,6 +1,5 @@
 <?php
 
-namespace Crawler;
 use App;
 
 /* * * * * * * * * 
