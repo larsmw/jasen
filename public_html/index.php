@@ -50,7 +50,7 @@ class myApp extends App\Application {
         $cmd = explode("/", $cmd);
 
         if($cmd[0] === "crawl") {
-            $crawler = \Crawler\Crawler::getInstance();
+            $crawler = App\Crawler::getInstance();
             $crawler->run();
             die();
         }
