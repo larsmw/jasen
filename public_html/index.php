@@ -25,7 +25,7 @@ define("ROOT", getcwd());
 /**
  * Handle errors properly
  */
-class UnknownException extends Exception {
+class UnknownException extends \Exception {
     
 }
 
