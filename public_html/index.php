@@ -92,8 +92,8 @@ class myApp extends App\Application {
 // To protect MySQL injection (more detail about MySQL injection)
             $myusername = stripslashes($myusername);
             $mypassword = stripslashes($mypassword);
-            $myusername = mysql_real_escape_string($myusername);
-            $mypassword = mysql_real_escape_string($mypassword);
+            $myusername = \mysql_real_escape_string($myusername);
+            $mypassword = \mysql_real_escape_string($mypassword);
 
             $sql = "SELECT * FROM $tbl_name WHERE username='$myusername' and password=PASSWORD('$mypassword');";
             $result = $this->db->fetchAssoc($sql);
