@@ -6,9 +6,6 @@
  * @author Lars Nielsen <lars@lfweb.dk>
  */
 
-var_dump($_SERVER['PHP_DB_USER']);
-var_dump($_SERVER['PHP_DB_PASS']);
-
 /**
 Routing ideas
 
@@ -179,12 +176,10 @@ class myApp extends \App\Application {
 
 }
 
-echo "12";
-
 try {
     $m = new myApp();
 }
 catch (Exception $e) {
-    echo "Fejlstatus : ERROR\n";
+    echo "Fejlstatus : ERROR (se mere i log-filen)\n";
 }
 
