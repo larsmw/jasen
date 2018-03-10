@@ -2,10 +2,22 @@
 
 namespace App;
 
-require_once ROOT.'/core/classes/Base.php';
-require_once ROOT.'/core/classes/User.php';
-require_once ROOT.'/core/classes/Interfaces.php';
-require_once ROOT.'/core/classes/Database.php';
+class AutoLoader {
+    static public function loader($className) {
+        $filename = ROOT."/core/classes/". str_replace("\\", '/', $className) . ".php";
+        if (file_exists($filename)) {
+            include($filename);
+            if (class_exists($className)) {
+                return TRUE;
+            }
+        }
+        return FALSE;
+    }
+}
+
+require_once(ROOT.'/core/classes/interfaces.php');
+
+spl_autoload_register('AutoLoader::loader');
 
 /**
  * Description of Application
