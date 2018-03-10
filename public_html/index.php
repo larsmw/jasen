@@ -171,7 +171,6 @@ class myApp extends \App\Application {
 
     public function menu() {
         // check access rights
-        return parent::showMenu(0);
     }
 
 }
