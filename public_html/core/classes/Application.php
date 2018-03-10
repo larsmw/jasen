@@ -79,7 +79,7 @@ class Application extends Base implements \interfaces\IWebApplication {
    */
   public function __destruct() {
     echo "<div class=\"xdebug-report\">";
-    //echo "Peak mem : ".(\xdebug_peak_memory_usage()/1024)."kb";
+    echo "Peak mem : ".(\xdebug_peak_memory_usage()/1024)."kb";
     echo "Running time : ".(\xdebug_time_index())."</div>";
     //var_dump(parent);
     parent::__destruct();
