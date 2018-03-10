@@ -5,7 +5,7 @@ require_once('Base.php');
 
 class Pager extends App\Base {
 
-    private $db;
+    protected $db;
 
     public function __construct() {
         /*
