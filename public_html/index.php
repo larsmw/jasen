@@ -38,9 +38,6 @@ require_once 'core/classes/Application.php';
 require_once 'core/classes/Crawler.php';
 require_once 'core/classes/Pager.php';
 
-// namespaces
-use App,Crawler;
-
 /**
  * Handle errors properly
  */

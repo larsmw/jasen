@@ -22,7 +22,7 @@ class Base {
     
     public function __construct() {
         // Load basic settings from settings file.
-        $this->db = new \Database($this->registry->db_settings);
+        $this->db = new \Database([]);
 
         $this->routes = new Router();
     }
