@@ -6,6 +6,9 @@
  * @author Lars Nielsen <lars@lfweb.dk>
  */
 
+var_dump($_SERVER['PHP_DB_USER']);
+var_dump($_SERVER['PHP_DB_PASS']);
+
 /**
 Routing ideas
 
