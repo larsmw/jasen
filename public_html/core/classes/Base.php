@@ -17,11 +17,14 @@ require_once ROOT.'/core/classes/Logger.php';
 class Base {   
     //put your code here
 //    public static $log;
+
+    protected $db;
     
     public function __construct() {
-        //$this->log = new Logger(ROOT.'/../logs/app.log');
-//        \Logger::info("wooot...");
-//        $this->log->debug("Base is starting.");
+        // Load basic settings from settings file.
+        $this->db = new Database($this->registry->db_settings);
+
+        $this->routes = new Router();
     }
     
     public function __destruct() {
@@ -30,4 +33,4 @@ class Base {
     }
 }
 
-?>
+
