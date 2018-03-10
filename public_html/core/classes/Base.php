@@ -24,7 +24,7 @@ class Base {
         // Load basic settings from settings file.
         $this->db = new \Database([]);
 
-        $this->routes = new Router();
+        $this->routes = new \Router();
     }
     
     public function __destruct() {
