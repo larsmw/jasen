@@ -1,5 +1,7 @@
 <?php
 
+namespace App;
+
 function auto_loader($className) {
     $filename = ROOT."/core/classes/". str_replace("\\", '/', $className) . ".php";
     if (file_exists($filename)) {
@@ -11,9 +13,7 @@ function auto_loader($className) {
     return FALSE;
 }
 
-spl_autoload_register('auto_loader');
-
-namespace App;
+spl_autoload_register('App\auto_loader');
 
 require_once(ROOT.'/core/classes/Interfaces.php');
 
