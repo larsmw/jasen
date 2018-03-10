@@ -2,8 +2,6 @@
 
 require_once 'Interfaces.php';
 
-use App;
-
 define('DB_TYPE', 'mysql');
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'linkhub');
@@ -21,7 +19,7 @@ class Database extends interfaces\Singleton {
         $this->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, DB_USER, DB_PASS);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOExceptio $e) {
-          echo $e->getMessage();
+          echo "database error";
           die();
         }
     }
