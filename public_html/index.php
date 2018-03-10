@@ -21,6 +21,7 @@ Routing ideas
 use App;
 
 define("ROOT", getcwd());
+include ROOT."/core/classes/Application.php";
 
 /**
  * Handle errors properly
