@@ -27,7 +27,9 @@ class Base {
     public function __destruct() {
     }
 
-    protected function schema($sql, $version) {
+    protected function schema($sql, $version, $module) {
+        // execute sql from callie
+        // update system table with module and version.
     }
 
     private function system_schema() {
