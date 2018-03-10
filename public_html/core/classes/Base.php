@@ -15,8 +15,6 @@ require_once ROOT.'/core/classes/Logger.php';
  * @author lars
  */
 class Base {   
-    //put your code here
-//    public static $log;
 
     protected $db;
     
@@ -24,12 +22,9 @@ class Base {
         // Load basic settings from settings file.
         $this->db = new \Database([]);
 
-        $this->routes = new \Router();
     }
     
     public function __destruct() {
-//        $this->log = new Logger(ROOT.'/../logs/app.log');
-//        \Logger::info("Peak mem : ".(memory_get_peak_usage(TRUE)/1024)."kb");
     }
 }
 
