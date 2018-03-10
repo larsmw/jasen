@@ -11,7 +11,7 @@ define('DB_USER', 'root');
 define('DB_PASS', 'was&87Bki');
 
 
-class App\Database extends interfaces\Singleton {
+class Database extends interfaces\Singleton {
 
     public $db;
 
