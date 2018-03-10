@@ -18,7 +18,7 @@ Routing ideas
   /admin/user/add
   /crawler/control/start
 **/
-namespace App;
+use App;
 
 define("ROOT", getcwd());
 
@@ -32,7 +32,7 @@ class UnknownException extends \Exception {
 /**
  * Implementation of Application class
  */
-class myApp extends \Application {
+class myApp extends Application {
 
     /**
      * Call constructor of parent.
