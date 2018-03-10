@@ -10,6 +10,8 @@ function auto_loader($className) {
             return TRUE;
         }
     }
+    error_log($className);
+    error_log($filename);
     return FALSE;
 }
 
