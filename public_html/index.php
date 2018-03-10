@@ -32,7 +32,7 @@ class UnknownException extends \Exception {
 /**
  * Implementation of Application class
  */
-class myApp extends Application {
+class myApp extends App\Application {
 
     /**
      * Call constructor of parent.
