@@ -19,6 +19,20 @@ spl_autoload_register('App\auto_loader');
 
 require_once(ROOT.'/core/classes/Interfaces.php');
 
+ini_set('display_errors', 'FALSE');
+ini_set('html_errors', 'FALSE');
+ini_set('log_errors', 'TRUE');
+//xdebug_enable();
+//xdebug_start_code_coverage();
+
+
+// TODO - define autoload
+
+header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
+header('Content-type: text/html; charset=utf-8');
+
+
 /**
  * Description of Application
  *
