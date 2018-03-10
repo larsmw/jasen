@@ -22,7 +22,7 @@ require_once(ROOT.'/core/classes/Interfaces.php');
  *
  * @author lars
  */
-class Application extends Base implements \interfaces\IWebApplication {
+class Application extends App\Base implements \interfaces\IWebApplication {
 
   private $_plugins = array();  
 
@@ -138,4 +138,3 @@ class Application extends Base implements \interfaces\IWebApplication {
   }
 }
 
-?>
