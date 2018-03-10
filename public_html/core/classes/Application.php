@@ -2,7 +2,7 @@
 
 namespace App;
 
-class AutoLoader {
+class Autoloader {
     static public function loader($className) {
         $filename = ROOT."/core/classes/". str_replace("\\", '/', $className) . ".php";
         if (file_exists($filename)) {
@@ -15,9 +15,9 @@ class AutoLoader {
     }
 }
 
-require_once(ROOT.'/core/classes/Interfaces.php');
+spl_autoload_register('Autoloader::loader');
 
-spl_autoload_register('\AutoLoader::loader');
+require_once(ROOT.'/core/classes/Interfaces.php');
 
 /**
  * Description of Application
