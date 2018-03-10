@@ -180,6 +180,7 @@ try {
     $m = new myApp();
 }
 catch (Exception $e) {
+    error_log($e);
     echo "Fejlstatus : ERROR (se mere i log-filen)\n";
 }
 
