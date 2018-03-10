@@ -19,24 +19,7 @@ Routing ideas
   /crawler/control/start
 **/
 
-ini_set('display_errors', 'FALSE');
-ini_set('html_errors', 'FALSE');
-ini_set('log_errors', 'TRUE');
-//xdebug_enable();
-//xdebug_start_code_coverage();
-
-
-// TODO - define autoload
-
-header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
-header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
-header('Content-type: text/html; charset=utf-8');
-
 define("ROOT", getcwd());
-
-require_once 'core/classes/Application.php';
-require_once 'core/classes/Crawler.php';
-require_once 'core/classes/Pager.php';
 
 /**
  * Handle errors properly
@@ -44,31 +27,6 @@ require_once 'core/classes/Pager.php';
 class UnknownException extends Exception {
     
 }
-
-
-class AddUrl extends Database {
-    public function __construct($form_id) {
-        parent::__construct();
-//        var_dump($_POST);
-    }
-
-    public function get($name) {
-        if(isset($_POST['url'])) {
-            return $_POST['url'];
-        }
-        else
-            {
-                throw new UnknownException("Missing url");
-            }
-    }
-
-    public function insert($url) {
-        $sql = "INSERT INTO crawl_queue (url, added) VALUES (:url, NOW())";
-        $q = $this->db->prepare($sql);
-        $q->execute(array(':url' => $url));
-    }
-}
-
 
 /**
  * Implementation of Application class
@@ -95,7 +53,7 @@ class myApp extends \App\Application {
             die();
         }
         if($cmd === "addurl") {
-            $f = new AddUrl('add_url');
+            $f = new Url('add_url');
             $f->insert($f->get('url'));
         }
         if($cmd[0] === "pager") {
