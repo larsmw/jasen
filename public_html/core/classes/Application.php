@@ -67,60 +67,6 @@ class Application extends Base implements \interfaces\IWebApplication {
 
 
   /**
-   * private test method
-   * @private
-   */
-  private function buildMenu($parent, $menu) {
-    // Menu builder function, parentId 0 is the root
-    //      echo "<pre>";var_dump($menu);echo "</pre>";
-    $html = "";
-    if (isset($menu['parents'][$parent]))
-      {
-	$html .= "<ul class=\"nav\">\n";
-	foreach ($menu['parents'][$parent] as $itemId)
-	  {
-	    if(!isset($menu['parents'][$itemId]))
-	      {
-		$html .= "<li class=\"dropdown\">\n  <a href='#'>".$menu['items'][$itemId]['label']."</a>\n</li> \n";
-	      }
-	    if(isset($menu['parents'][$itemId]))
-	      {
-		$html .= "<li class=\"dropdown\">\n  <a href='".$menu['items'][$itemId]['link']."' class=\"dropdown-toggle\">".$menu['items'][$itemId]['label']."</a> \n";
-		$html .= $this->buildMenu($itemId, $menu);
-		$html .= "</li> \n";
-	      }
-	  }
-	$html .= "</ul> \n";
-      }
-    return $html;
-  }
-
-
-  public function showMenu($id) {
-
-      $sql = "SELECT id, label, link, parent FROM menu_item ORDER BY weight, parent, label";
-
-      $result = $this->db->fetchAssoc($sql);
-
-      // Create a multidimensional array to conatin a list of items and parents
-      $menu = array(
-		  'items' => array(),
-		  'parents' => array()
-      );
-
-      // Builds the array lists with data from the menu table
-      foreach($result as $items)
-          {
-              // Creates entry into items array with current menu item id ie. $menu['items'][1]
-              $menu['items'][$items['id']] = $items;
-              // Creates entry into parents array. Parents array contains a list of all items with children
-              $menu['parents'][$items['parent']][] = $items['id'];
-          }
-      
-      return "<nav id=\"main-menu\">".$this->buildMenu(0, $menu)."</nav>";
-  }
-
-  /**
    * Show some statistics and close down nicely
    */
   public function __destruct() {
@@ -131,12 +77,5 @@ class Application extends Base implements \interfaces\IWebApplication {
     parent::__destruct();
   }
   
-  private function showDBStats() {
-      $r = $this->db->fetchAssoc("SHOW STATUS;");
-      //var_dump($r);
-      foreach($r as $v) {
-          echo $v['Variable_name']." = '".$v['Value']."'<br />";
-      }
-  }
 }
 
