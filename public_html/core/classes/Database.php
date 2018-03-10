@@ -5,8 +5,8 @@ require_once 'Interfaces.php';
 define('DB_TYPE', 'mysql');
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'linkhub');
-define('DB_USER', getenv('DB_USER'));
-define('DB_PASS', getenv('DB_PASS'));
+define('DB_USER', $_SERVER['DB_USER']);
+define('DB_PASS', $_SERVER['DB_PASS']);
 
 
 class Database extends interfaces\Singleton {
