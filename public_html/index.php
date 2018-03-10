@@ -18,7 +18,7 @@ Routing ideas
   /admin/user/add
   /crawler/control/start
 **/
-use App;
+use App,Crawler;
 
 define("ROOT", getcwd());
 include ROOT."/core/classes/Application.php";
