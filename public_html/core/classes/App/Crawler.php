@@ -1,9 +1,7 @@
 <?php
 
 namespace Crawler;
-
-require_once "Database.php";
-require_once "Robots.php";
+use App;
 
 /* * * * * * * * * 
  * Crawlere skal kunne kaldes fra flere forskellige interfaces.
