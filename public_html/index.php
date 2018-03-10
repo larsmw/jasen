@@ -185,6 +185,6 @@ try {
     $m = new myApp();
 }
 catch (Exception $e) {
-    var_dump($e);
- }
+    echo "Fejlstatus : ERROR\n";
+}
 
