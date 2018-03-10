@@ -1,7 +1,7 @@
 <?php
 
 namespace Crawler;
-use App;
+
 
 /* * * * * * * * * 
  * Crawlere skal kunne kaldes fra flere forskellige interfaces.
@@ -14,7 +14,7 @@ class Crawler extends \interfaces\Singleton {
     private $db;
 
     public function __construct() {
-        $this->db = \Database::getInstance();
+        $this->db = App\Database::getInstance();
     }
 
     /**

@@ -18,6 +18,8 @@ Routing ideas
   /admin/user/add
   /crawler/control/start
 **/
+namespace Linkhub;
+
 use App,Crawler;
 
 define("ROOT", getcwd());
@@ -121,10 +123,7 @@ class myApp extends App\Application {
       else {
           $login_form = "Velkommen ".$_COOKIE['myusername']."!";
       }
-      $crawler = new App\Crawler();
-      $template = str_replace("{%region:mainmenu}", $this->menu(), $template);
       $template = str_replace("{%login-form}", $login_form, $template);
-      $template = str_replace("{%url-report}", $crawler->getReport(), $template);
       
       return $template;
     }

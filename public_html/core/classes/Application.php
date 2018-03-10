@@ -3,30 +3,26 @@
 namespace App;
 
 function auto_loader($className) {
-    $filename = ROOT."/core/classes/". str_replace("\\", '/', $className) . ".php";
-    if (file_exists($filename)) {
-        include($filename);
-        if (class_exists($className)) {
-            return TRUE;
-        }
+  $filename = ROOT."/core/classes/". str_replace("\\", '/', $className) . ".php";
+  if (file_exists($filename)) {
+    include($filename);
+    if (class_exists($className)) {
+      return TRUE;
     }
-    error_log($className);
-    error_log($filename);
-    return FALSE;
+  }
+  $errorMsg = "Autoloader failed with Class : $className, file : $filename";
+  error_log($errorMsg);
+  return FALSE;
 }
 
 spl_autoload_register('App\auto_loader');
 
 require_once(ROOT.'/core/classes/Interfaces.php');
 
-ini_set('display_errors', 'FALSE');
-ini_set('html_errors', 'FALSE');
+ini_set('display_errors', 'TRUE');
+ini_set('html_errors', 'TRUE');
 ini_set('log_errors', 'TRUE');
-//xdebug_enable();
-//xdebug_start_code_coverage();
 
-
-// TODO - define autoload
 
 header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
@@ -56,7 +52,6 @@ class Application extends Base implements \interfaces\IWebApplication {
     $this->db = \Database::getInstance();
     
     $this->run();
-    //$this->showDBStats();
   }
   
   private function getImplementingClasses( $interfaceName ) {
@@ -79,14 +74,13 @@ class Application extends Base implements \interfaces\IWebApplication {
       $obs->run( $this, "some parameter" );
   }
 
-
   /**
    * Show some statistics and close down nicely
    */
   public function __destruct() {
     echo "<div class=\"xdebug-report\">";
-    echo "Peak mem : ".(xdebug_peak_memory_usage()/1024)."kb";
-    echo "Running time : ".(xdebug_time_index())."</div>";
+    echo "Peak mem : ".(\xdebug_peak_memory_usage()/1024)."kb";
+    echo "Running time : ".(\xdebug_time_index())."</div>";
     //var_dump(parent);
     parent::__destruct();
   }
