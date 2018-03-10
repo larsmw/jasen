@@ -15,7 +15,7 @@ class AutoLoader {
     }
 }
 
-require_once(ROOT.'/core/classes/interfaces.php');
+require_once(ROOT.'/core/classes/Interfaces.php');
 
 spl_autoload_register('AutoLoader::loader');
 
