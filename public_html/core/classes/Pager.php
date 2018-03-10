@@ -1,8 +1,5 @@
 <?php
 
-require_once('Database.php');
-require_once('Base.php');
-
 class Pager extends App\Base {
 
     protected $db;
