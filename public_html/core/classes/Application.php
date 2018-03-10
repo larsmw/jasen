@@ -2,20 +2,18 @@
 
 namespace App;
 
-class Autoloader {
-    static public function loader($className) {
-        $filename = ROOT."/core/classes/". str_replace("\\", '/', $className) . ".php";
-        if (file_exists($filename)) {
-            include($filename);
-            if (class_exists($className)) {
-                return TRUE;
-            }
+function auto_loader($className) {
+    $filename = ROOT."/core/classes/". str_replace("\\", '/', $className) . ".php";
+    if (file_exists($filename)) {
+        include($filename);
+        if (class_exists($className)) {
+            return TRUE;
         }
-        return FALSE;
     }
+    return FALSE;
 }
 
-spl_autoload_register('Autoloader::loader');
+spl_autoload_register('auto_loader');
 
 require_once(ROOT.'/core/classes/Interfaces.php');
 
