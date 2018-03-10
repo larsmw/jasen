@@ -2,6 +2,8 @@
 
 require_once 'Interfaces.php';
 
+use App;
+
 define('DB_TYPE', 'mysql');
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'linkhub');
