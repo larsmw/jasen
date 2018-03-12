@@ -2,6 +2,24 @@
 
 namespace App;
 
+ini_set('display_errors', 1);
+
+function linkhub_exception_handler( \Exception $ex ) {
+  echo "Linkhub fangede en fejl : " . $ex->getMessage();
+  echo "<br />\nSe detaljer i loggen.";
+  error_log(var_export($ex, true));
+  die();
+}
+
+function linkhub_error_handler( int $errno, string $errstr, string $errfile, int $errline) {
+  echo "Linkhub fangede en fejl : " . $errstr;
+  error_log($errno . " " . $errstr . " : @" . $errfile . "(".$errline.")");
+  return false;
+}
+
+set_exception_handler('App\linkhub_exception_handler');
+$old_error_handler = set_error_handler('App\linkhub_error_handler');
+
 function auto_loader($className) {
   $filename = ROOT."/core/classes/". str_replace("\\", '/', $className) . ".php";
   if (file_exists($filename)) {
