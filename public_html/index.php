@@ -6,18 +6,6 @@
  * @author Lars Nielsen <lars@lfweb.dk>
  */
 
-/**
-Routing ideas
-
-  /MODULE/ID/METHOD
-
-  eg. 
-  /page/23/view
-  /search/the+string+to+find/list
-  /admin/user/
-  /admin/user/add
-  /crawler/control/start
-**/
 namespace Linkhub;
 
 use App,Crawler;
