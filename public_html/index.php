@@ -102,6 +102,9 @@ class myApp extends App\Application {
         }
     }
 
+    /**
+     * @return html
+     */
     private function parse() {
       $template = file_get_contents("templates/index.html");
       

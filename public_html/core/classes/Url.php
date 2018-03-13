@@ -9,7 +9,7 @@ class Url extends App\Base {
   }
 
   public function get($name) {
-        
+    
   }
 
   public function insert($url) {
