@@ -14,13 +14,6 @@ define("ROOT", getcwd());
 include ROOT."/core/classes/Application.php";
 
 /**
- * Handle errors properly
- */
-class UnknownException extends \Exception {
-    
-}
-
-/**
  * Implementation of Application class
  */
 class myApp extends App\Application {
@@ -29,7 +22,6 @@ class myApp extends App\Application {
      * Call constructor of parent.
      */
     public function __construct() {
-        session_start();
 
         if(isset($_GET['q'])){
             $cmd = $_GET['q'];
@@ -73,11 +65,11 @@ class myApp extends App\Application {
 
         $count = 0;
         if (isset($_POST['myusername']) && isset($_POST['mypassword'])) {
-// username and password sent from form
+            // username and password sent from form
             $myusername = $_POST['myusername'];
             $mypassword = $_POST['mypassword'];
 
-// To protect MySQL injection (more detail about MySQL injection)
+            // To protect MySQL injection (more detail about MySQL injection)
             $myusername = stripslashes($myusername);
             $mypassword = stripslashes($mypassword);
             $myusername = \mysql_real_escape_string($myusername);
@@ -86,13 +78,13 @@ class myApp extends App\Application {
             $sql = "SELECT * FROM $tbl_name WHERE username='$myusername' and password=PASSWORD('$mypassword');";
             $result = $this->db->fetchAssoc($sql);
 
-// Mysql_num_row is counting table row
+            // Mysql_num_row is counting table row
             $count = count($result);
-// If result matched $myusername and $mypassword, table row must be 1 row
+            // If result matched $myusername and $mypassword, table row must be 1 row
 
             if ($count == 1) {
 
-// Register $myusername, $mypassword and redirect to file "login_success.php"
+                // Register $myusername, $mypassword and redirect to file "login_success.php"
                 setcookie("myusername", $myusername, time() + 7200);
                 setcookie("mypassword", crypt($mypassword), time() + 7200);
                 header("location:index.php");
