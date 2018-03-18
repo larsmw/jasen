@@ -1,11 +1,8 @@
 <?php
 
-require_once('Database.php');
-require_once('Base.php');
+class Pager extends App\Base {
 
-class Pager extends Base {
-
-    private $db;
+    protected $db;
 
     public function __construct() {
         /*

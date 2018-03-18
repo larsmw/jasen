@@ -1,12 +1,22 @@
 <?php
 
-interface Plugin {
-    function run( $data );
+namespace interfaces;
+
+interface IWebApplication
+{
+  function addRun( $observer );
 }
+
+interface IWebObject 
+{
+  function run( $sender, $args );
+}
+
+
 
 class Singleton
 {
-    protected static $_instance = null;
+    protected static $instances = array();
     protected function __construct()
     {
         //Thou shalt not construct that which is unconstructable!
@@ -18,9 +28,10 @@ class Singleton
 
     public static function getInstance()
     {
-        if (is_null(self::$_instance)) {
-            self::$_instance = new self();
+        $cls = get_called_class();
+        if (!isset(self::$instances[$cls])) {
+            self::$instances[$cls] = new static;
         }
-        return self::$_instance;
+        return self::$instances[$cls];
     }
 }

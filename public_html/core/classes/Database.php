@@ -1,60 +1,34 @@
 <?php
 
 require_once 'Interfaces.php';
-
-require_once ROOT.'/../conf.php';
+require_once(ROOT."/../../linkhub.settings.php");
 
 
 class Database {
+define('DB_TYPE', 'mysql');
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'linkhub');
+define('DB_USER', PHP_DB_USER);
+define('DB_PASS', PHP_DB_PASS);
 
-    public $db = null;
 
-    //protected static $_instance = null;
-    public function __construct()
-    {
-        global $databases;
-        //var_dump($databases);
-        //Thou shalt not construct that which is unconstructable!
-        $this->db = new PDO("mysql:host=".$databases['default']['host'].";dbname=".$databases['default']['db']."", $databases['default']['user'], $databases['default']['password']);
+class Database extends interfaces\Singleton {
+
+    public $db;
+
+    public function __construct() {
+        try {        
+        $this->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, DB_USER, DB_PASS);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    }
-    protected function __clone()
-    {
-        //Me not like clones! Me smash clones!
-    }
-
-    /*    public static function getInstance()
-    {
-        global $databases;
-//        var_dump($databases);
-        if (is_null(self::$_instance)) {
-            self::$_instance = new self();
-            self::$db = new PDO("mysql:host=".$databases['default']['host'].";dbname=".$databases['default']['db']."", $databases['default']['user'], $databases['default']['password']);
-            self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch (PDOExceptio $e) {
+          echo "database error";
+          die();
         }
-        return self::$_instance;
-	}*/
+    }
 
     public function fetchAssoc($sql) {
         $stmt = $this->db->query($sql);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $result;
-    }
-
-    public function insertGetId($table, $value) {
-      if(is_array($value))
-	$value = $value[0];
-      $sql = "SELECT id,name FROM $table WHERE name like '" . $value . "';";
-      $r = $this->fetchAssoc($sql);
-      if(count($r)===0) {
-	$sql = "INSERT INTO $table (name) VALUES (:name)";
-	$q = $this->db->prepare($sql);
-	$q->execute(array(':name'=>$value));
-	return $this->db->lastInsertId();
-      }
-      else {
-	return $r[0]['id'];
-      }
-    }
+    }        
 }

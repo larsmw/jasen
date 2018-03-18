@@ -1,7 +1,7 @@
 
 # append at the end of the file:
-#php_value xdebug.profiler_enable 1
-#php_value xdebug.profiler_output_dir /tmp
+php_value xdebug.profiler_enable 1
+php_value xdebug.profiler_output_dir /tmp
 
 RewriteEngine on
 RewriteBase /
