@@ -2,7 +2,8 @@
 
 namespace App;
 
-ini_set('display_errors', 1);
+ini_set('display_errors', FALSE);
+ini_set('log_errors', TRUE);
 
 function linkhub_exception_handler( \Exception $ex ) {
   echo "Linkhub fangede en fejl : " . $ex->getMessage();
