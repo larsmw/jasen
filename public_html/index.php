@@ -109,11 +109,6 @@ class myApp extends App\Application {
       
       return $template;
     }
-
-    public function menu() {
-        // check access rights
-    }
-
 }
 
 try {
