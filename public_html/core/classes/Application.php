@@ -29,6 +29,7 @@ function auto_loader($className) {
       return TRUE;
     }
   }
+
   $errorMsg = "Autoloader failed with Class : $className, file : $filename";
   error_log($errorMsg);
   return FALSE;
