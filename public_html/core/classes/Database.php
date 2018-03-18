@@ -26,6 +26,9 @@ class Database extends interfaces\Singleton {
         }
     }
 
+    /**
+     * @return assoc array of results
+     */
     public function fetchAssoc($sql) {
         $stmt = $this->db->query($sql);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
