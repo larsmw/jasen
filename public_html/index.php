@@ -1,5 +1,4 @@
 <?php
-//
 /**
  * This is a search engine...
  * 
