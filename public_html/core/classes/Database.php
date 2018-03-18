@@ -7,7 +7,7 @@ require_once(ROOT."/../../linkhub.settings.php");
 class Database {
 define('DB_TYPE', 'mysql');
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'linkhub');
+define('DB_NAME', PHP_DB_DATABASE);
 define('DB_USER', PHP_DB_USER);
 define('DB_PASS', PHP_DB_PASS);
 
