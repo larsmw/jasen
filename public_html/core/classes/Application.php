@@ -72,7 +72,10 @@ class Application extends Base implements \interfaces\IWebApplication {
     
     $this->run();
   }
-  
+
+  /**
+   * @return An array of objects that is implementing an interface
+   */
   private function getImplementingClasses( $interfaceName ) {
     return array_filter(
         get_declared_classes(),
