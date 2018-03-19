@@ -5,7 +5,7 @@ namespace Crawler;
 
 /* * * * * * * * * 
  * Crawlere skal kunne kaldes fra flere forskellige interfaces.
- * Dvs den mÃ¥ ikke skrive html, men skal returere nogle menings-
+ * Dvs den må ikke skrive html, men skal returere nogle menings-
  * fyldte fejlkoder og svar.
  */
 
@@ -34,8 +34,6 @@ class Crawler extends \interfaces\Singleton {
      * Starts a run of the crawler.
      */
     public function run() {
-        //$this->doRun();
-        //die();
 
         $pid = \pcntl_fork(); // fork
         var_dump($pid);
@@ -49,7 +47,6 @@ class Crawler extends \interfaces\Singleton {
             
             if ($sid < 0)
                 exit;
-            var_dump($sid);
             $this->bgRun();
         }
 
