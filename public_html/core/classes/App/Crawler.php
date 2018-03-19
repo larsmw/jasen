@@ -34,9 +34,7 @@ class Crawler extends \interfaces\Singleton {
      * Starts a run of the crawler.
      */
     public function run() {
-
         $pid = \pcntl_fork(); // fork
-        var_dump($pid);
         if ($pid < 0)
             exit;
         else if ($pid) // parent
@@ -44,12 +42,10 @@ class Crawler extends \interfaces\Singleton {
         else { // child
             echo "running";
             $sid = posix_setsid();
-            
             if ($sid < 0)
                 exit;
             $this->bgRun();
         }
-
         header('Location: /');
     }
 
@@ -57,7 +53,9 @@ class Crawler extends \interfaces\Singleton {
         syslog(LOG_NOTICE, "Starting background...");
     }
 
-
+    /**
+     * @return content of given url
+     */
     private function downloadUrl($url) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_HEADER, 0);
