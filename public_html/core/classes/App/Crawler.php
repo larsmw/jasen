@@ -198,9 +198,9 @@ class Crawler extends \interfaces\Singleton {
         echo "</body></html>";
     }
 
-    // $html        = the html on the page
-// $current_url = the full url that the html came from (only needed for $repath)
-// $relative_path      = converts ../ and / and // urls to full valid urls
+    /**
+     * Extracts links from html content.
+     */
     function pageLinks($html, $current_url = "", $relative_path = false){
         preg_match_all("/\<a.+?href=(\"|')(?!javascript:|#)(.+?)(\"|')/i", $html, $matches);
         $links = array();
