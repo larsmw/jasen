@@ -2,9 +2,9 @@
 
 use PHPUnit\Framework\TestCase;
 
-define('ROOT', getcwd());
+define('ROOT', getcwd()."/public_html/");
 
-include("public_html/core/classes/Application.php");
+include(ROOT."core/classes/Application.php");
 
 final class CoreTest extends TestCase {
 
