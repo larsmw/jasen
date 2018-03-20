@@ -1,4 +1,5 @@
-<phpunit>
+<phpunit
+    verbose="true">
   <testsuites>
     <testsuite name="Linkhub">
       <directory>public_html/tests</directory>
