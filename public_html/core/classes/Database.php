@@ -1,7 +1,7 @@
 <?php
 
 require_once 'Interfaces.php';
-require_once(ROOT."/../../linkhub.settings.php");
+require_once(ROOT."/../linkhub.settings.php");
 
 define('DB_TYPE', 'mysql');
 define('DB_HOST', 'localhost');
