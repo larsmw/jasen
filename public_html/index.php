@@ -21,7 +21,9 @@ class myApp extends App\Application {
      * Call constructor of parent.
      */
     public function __construct() {
+        parent::__construct();
 
+        // make a router!
         if(isset($_GET['q'])){
             $cmd = $_GET['q'];
         }
@@ -44,7 +46,6 @@ class myApp extends App\Application {
             $p->run();
             die();
         }
-        parent::__construct();
         if($cmd === "logout") {
             unset($_COOKIE['myusername']);
             session_start();
