@@ -1,0 +1,7 @@
+<phpunit>
+  <testsuites>
+    <testsuite name="Linkhub">
+      <directory>public_html/tests</directory>
+    </testsuite>
+  </testsuites>
+</phpunit>
