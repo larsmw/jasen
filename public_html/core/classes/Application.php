@@ -9,7 +9,7 @@ function linkhub_exception_handler( \Exception $ex ) {
   echo "Linkhub fangede en fejl : " . $ex->getMessage();
   echo "<br />\nSe detaljer i loggen.";
   error_log(var_export($ex, true));
-  mail("admin@linkhub.dk", "Exception", var_export($e, true));
+  mail("admin@linkhub.dk", "Exception", var_export($ex, true));
   die();
 }
 
