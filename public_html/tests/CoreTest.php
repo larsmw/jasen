@@ -4,7 +4,7 @@ use PHPUnit\Framework\TestCase;
 
 define('ROOT', getcwd());
 
-include("core/classes/Application.php");
+include("public_html/core/classes/Application.php");
 
 final class CoreTest extends TestCase {
 
@@ -14,9 +14,9 @@ final class CoreTest extends TestCase {
     
     public function testCore() {
         echo getcwd();
-        //$a = new \Linkhub\myApp();
+        $a = new \Linkhub\myApp();
 
-        //$this->assertTrue(is_object($a), "a is not an object");
+        $this->assertTrue(is_object($a), "a is not an object");
     }
 
 }
