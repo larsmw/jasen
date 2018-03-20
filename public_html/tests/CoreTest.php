@@ -7,7 +7,8 @@ define('ROOT', getcwd());
 include("core/classes/Application.php");
 
 final class CoreTest extends TestCase {
-    public function __construct() {
+
+    function setUp() {
         echo getcwd();
     }
     
