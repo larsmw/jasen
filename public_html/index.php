@@ -95,6 +95,7 @@ class myApp extends App\Application {
     }
 
     /**
+     * Renders html and adds to global template
      * @return html
      */
     private function parse() {
@@ -119,4 +120,3 @@ catch (Exception $e) {
     error_log($e);
     echo "Fejlstatus : ERROR (se mere i log-filen)\n";
 }
-
