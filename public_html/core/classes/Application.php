@@ -3,6 +3,7 @@
 namespace App;
 
 ini_set('display_errors', FALSE);
+ini_set('html_errors', FALSE);
 ini_set('log_errors', TRUE);
 
 function linkhub_exception_handler( \Exception $ex ) {
@@ -11,7 +12,7 @@ function linkhub_exception_handler( \Exception $ex ) {
   error_log(var_export($ex, true));
   mail("admin@linkhub.dk", "Exception", var_export($ex, true));
   die();
-}
+  }
 
 function linkhub_error_handler( int $errno, string $errstr, string $errfile, int $errline) {
   echo "Linkhub fangede en fejl : " . $errstr;
@@ -76,6 +77,7 @@ class Application extends Base implements \interfaces\IWebApplication {
     $this->db = \Database::getInstance();
     
     $this->run();
+    $this->router->exec();
   }
 
   /**

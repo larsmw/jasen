@@ -17,8 +17,8 @@ class Database extends interfaces\Singleton {
         try {        
         $this->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, DB_USER, DB_PASS);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOExceptio $e) {
-          echo "database error";
+        } catch (PDOException $e) {
+          echo "database error : " . $e->getMessage();
           die();
         }
     }

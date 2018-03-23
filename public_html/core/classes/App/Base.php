@@ -17,11 +17,12 @@ require_once ROOT.'/core/classes/Logger.php';
 class Base {   
 
     protected $db;
+    protected $router;
     
     public function __construct() {
         // Load basic settings from settings file.
         $this->db = new \Database([]);
-
+        $this->router = new \Router();
     }
     
     public function __destruct() {

@@ -24,7 +24,7 @@ class EventDispatcher {
     //var_dump($this->map);
     if(isset($this->map[$eventName])) {
       foreach ($this->map[$eventName] as $callback) {
-	call_user_func_array(array($this->objects[$callback], $eventName), array($data));
+	    call_user_func_array(array($this->objects[$callback], $eventName), array($data));
       }
     }
   }

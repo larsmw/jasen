@@ -2,9 +2,9 @@
 
 use PHPUnit\Framework\TestCase;
 
-define('ROOT', getcwd()."/public_html/");
+define('ROOT', getcwd()."/public_html");
 
-include(ROOT."core/classes/Application.php");
+include(ROOT."/core/classes/Application.php");
 
 final class CoreTest extends TestCase {
 
@@ -14,7 +14,7 @@ final class CoreTest extends TestCase {
     
     public function testCore() {
         echo getcwd();
-        $a = new \Linkhub\myApp();
+        $a = new App\Application();
 
         $this->assertTrue(is_object($a), "a is not an object");
     }
