@@ -23,7 +23,7 @@ class myApp extends App\Application {
     public function __construct() {
         parent::__construct();
 
-        // make a router!
+        // create some routes
         if(isset($_GET['q'])){
             $cmd = $_GET['q'];
         }
