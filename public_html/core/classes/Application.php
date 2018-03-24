@@ -68,7 +68,9 @@ class Application extends Base implements \interfaces\IWebApplication {
    */
   public function __construct() {
     parent::__construct();
-    session_start();
+    if (session_status() == PHP_SESSION_NONE) {
+      session_start();
+    }
 
     foreach ($this->getImplementingClasses("interfaces\IWebObject") as $plugin ) {
         $this->_plugins[] = new $plugin;
