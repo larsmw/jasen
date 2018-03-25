@@ -1,20 +1,20 @@
 <?php
 
 require_once 'Interfaces.php';
-require_once(ROOT."/../linkhub.settings.php");
 
 define('DB_TYPE', 'mysql');
 define('DB_HOST', 'localhost');
-define('DB_NAME', PHP_DB_DATABASE);
-define('DB_USER', PHP_DB_USER);
-define('DB_PASS', PHP_DB_PASS);
+define('DB_NAME', 'linkhub');
 
 class Database extends interfaces\Singleton {
 
     public $db;
 
     public function __construct() {
-        try {        
+      try {
+          $conf = unserialize($_SERVER['PHP_VALUE']);
+          var_dump($conf);
+          die();
         $this->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, DB_USER, DB_PASS);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
