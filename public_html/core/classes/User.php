@@ -23,6 +23,7 @@ class User extends Base implements \interfaces\IWebObject {
   private function validateLogin() {
     $tbl_name = "users"; // Table name
 
+    // number of errors
     $count = 0;
     if (isset($_POST['myusername']) && isset($_POST['mypassword'])) {
       // username and password sent from form
