@@ -4,6 +4,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', TRUE);
 
 // This should be made to a cron daemon
+
 $pid = pcntl_fork(); // fork
 if ($pid < 0)
     exit;
