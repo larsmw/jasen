@@ -19,7 +19,7 @@ class Singleton
     protected static $instances = array();
     protected function __construct()
     {
-        //Thou shalt not construct that which is unconstructable!
+        //Prevent construction of Singleton objects
     }
     protected function __clone()
     {
