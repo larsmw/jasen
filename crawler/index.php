@@ -10,7 +10,7 @@ if ($pid < 0)
     exit;
 else if ($pid) // parent
     exit;
-else { // child
+else { // child is created
     $sid = posix_setsid();
 
     if ($sid < 0)
