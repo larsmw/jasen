@@ -13,9 +13,7 @@ class Database extends interfaces\Singleton {
     public function __construct() {
       try {
           $conf = unserialize($_SERVER['PHP_VALUE']);
-          var_dump($conf);
-          die();
-        $this->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, DB_USER, DB_PASS);
+        $this->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, $conf['db_user'], $conf['db_pass']);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
           echo "database error : " . $e->getMessage();
