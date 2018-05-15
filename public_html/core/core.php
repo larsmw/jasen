@@ -6,8 +6,6 @@
 
 include_once("classes/Interfaces.php");
 
-require_once("Config.php");
-
 class EventDispatcher {
   private $map,$obejcts;
 
@@ -47,7 +45,7 @@ class Core {
     $d = new EventDispatcher();
     foreach(get_declared_classes() as $c) {
       if(in_array('Plugin', class_implements($c))) {
-	$d->addListener($c);
+        $d->addListener($c);
       }
     }
 
