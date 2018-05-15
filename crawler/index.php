@@ -1,21 +1,21 @@
 <?php
 
 error_reporting(E_ALL);
-ini_set('display_errors', TRUE);
+ini_set('display_errors', true);
 
 // This should be made to a cron daemon
 
 $pid = pcntl_fork(); // fork
-if ($pid < 0)
+if ($pid < 0) {
     exit;
-else if ($pid) // parent
+} elseif ($pid) { // parent
     exit;
-else { // child is created
+} else { // child is created
     $sid = posix_setsid();
 
-    if ($sid < 0)
+    if ($sid < 0) {
         exit;
-
+    }
     for ($i = 0; $i <= 6; $i++) { // do something for 5 minutes
         sleep(5);
         echo "pid : $pid\n";
@@ -24,4 +24,3 @@ else { // child is created
     }
     echo "$sid : done\n";
 }
-
