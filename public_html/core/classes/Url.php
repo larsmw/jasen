@@ -1,7 +1,5 @@
 <?php
 
-namespace App;
-
 class Url extends App\Base {
 
   public function __construct($url) {

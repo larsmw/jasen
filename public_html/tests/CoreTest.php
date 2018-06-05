@@ -1,22 +1,21 @@
 <?php
 
+namespace Tests;
+
 use PHPUnit\Framework\TestCase;
+use Linkhub;
 
-define('ROOT', getcwd()."/public_html");
-
-include(ROOT."/core/classes/Application.php");
-
-final class CoreTest extends TestCase {
-
-    function setUp() {
-        echo getcwd();
+final class CoreTest extends \PHPUnit\Framework\TestCase
+{
+    public function setUp()
+    {
+        $conf = ['db_user'=>'root','db_pass'=>'HxnkQVzR'];
+        $_SERVER['PHP_VALUE'] = serialize($conf);
     }
     
-    public function testCore() {
-        echo getcwd();
-        $a = new App\Application();
-
+    public function testCore()
+    {
+        $a = new \Linkhub\Application();
         $this->assertTrue(is_object($a), "a is not an object");
     }
-
 }
