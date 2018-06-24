@@ -1,3 +1,6 @@
+html {
+    background-color: white;
+}
 
 .region-right {
     float: right;
@@ -12,7 +15,6 @@ article {
 
 .footer {
     float: left;
-    background-color: white;
 }
 
 h1, h2, h3 {
