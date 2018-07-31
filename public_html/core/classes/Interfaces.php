@@ -7,8 +7,11 @@ interface IWebApplication
   function addRun( $observer );
 }
 
-interface IWebObject 
+interface IWebObject
 {
+  // define a path and a callback, so we know how to call your object
+  function route();
+  // A default run method will be called on every object
   function run( $sender, $args );
 }
 
@@ -23,7 +26,7 @@ class Singleton
     }
     protected function __clone()
     {
-        //Me not like clones! Me smash clones!
+        // Prevent cloning Singletons.
     }
 
     public static function getInstance()
