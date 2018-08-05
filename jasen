@@ -1,0 +1,8 @@
+#!/usr/bin/php
+<?php
+ini_set('html_errors', 0);
+ini_set('implicit_flush', 1);
+
+include 'libs/cli.php';
+
+$c = new Cli();
