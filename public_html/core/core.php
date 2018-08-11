@@ -5,10 +5,6 @@
  * This is a project....
  */
 
-/*function __autoload($class_name) {
-   require_once $class_name . '.php';
-   }*/
-
 include_once("classes/Interfaces.php");
 
 require_once("Config.php");
@@ -39,6 +35,7 @@ class Core {
 
   public function __construct() {
 
+    // TODO: make an autoloader
     session_start();
 
     // Find plugins
@@ -46,13 +43,13 @@ class Core {
 
     foreach($files as $file) {
       if(preg_match("/^.*\.(inc|php)$/i", $file)) {
-	include_once(ROOT."/core/classes/".$file);
+        include_once(ROOT."/core/classes/".$file);
       }
     }
     $d = new EventDispatcher();
     foreach(get_declared_classes() as $c) {
       if(in_array('Plugin', class_implements($c))) {
-	$d->addListener($c);
+        $d->addListener($c);
       }
     }
 
