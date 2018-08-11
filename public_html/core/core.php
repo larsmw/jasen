@@ -1,4 +1,9 @@
 <?php
+/**
+ * Linkhub
+ *
+ * This is a project....
+ */
 
 /*function __autoload($class_name) {
    require_once $class_name . '.php';
