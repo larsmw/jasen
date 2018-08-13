@@ -109,9 +109,11 @@ class Application extends Base implements \interfaces\IWebApplication {
    * Show some statistics and close down nicely
    */
   public function __destruct() {
-    echo "<div class=\"xdebug-report\">";
-    echo "Peak mem : ".(\xdebug_peak_memory_usage()/1024)."kb";
-    echo "Running time : ".(\xdebug_time_index())."</div>";
+    if (function_exists("xdebug_peak_memory_usage")) {
+      echo "<div class=\"xdebug-report\">";
+      echo "Peak mem : ".(\xdebug_peak_memory_usage()/1024)."kb";
+      echo "Running time : ".(\xdebug_time_index())."</div>";
+    }
     //var_dump(parent);
     parent::__destruct();
   }
