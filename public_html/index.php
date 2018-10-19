@@ -10,7 +10,7 @@ namespace Linkhub;
 use App,Crawler;
 
 define("ROOT", getcwd());
-include ROOT."/core/classes/Application.php";
+include ROOT."/core/core.php";
 
 /**
  * Implementation of Application class
