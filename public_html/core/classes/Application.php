@@ -12,7 +12,7 @@ header('Content-type: text/html; charset=utf-8');
  *
  * @author lars
  */
-class Application extends \App\Base implements \interfaces\IWebApplication
+class Application extends App\Base implements \interfaces\IWebApplication
 {
 
     private $_plugins = array();
