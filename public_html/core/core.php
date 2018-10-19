@@ -33,7 +33,9 @@ $old_error_handler = set_error_handler('App\linkhub_error_handler');
 
 function auto_loader($className)
 {
+    error_log($className);
     $filename = ROOT."/core/classes/". str_replace("\\", '/', $className) . ".php";
+    error_log($filename);
     if (file_exists($filename)) {
         include($filename);
         if (class_exists($className)) {
