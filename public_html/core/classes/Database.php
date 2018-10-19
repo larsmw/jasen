@@ -12,13 +12,12 @@ class Database extends interfaces\Singleton {
 
     public function __construct() {
       try {
-        $this->db = new PDO(
-            DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME,
-            $_SERVER['APP_DATABASE_USER'], $_SERVER['APP_DATABASE_PASSWORD']);
+        $conf = unserialize($_SERVER['PHP_VALUE']);
+        $this->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, $conf['db_user'], $conf['db_pass']);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-          echo "Database error : " . $e->getMessage();
-          die();
+          error_log($e->getMessage());
+          throw $e;
         }
     }
 

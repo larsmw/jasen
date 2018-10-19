@@ -1,8 +1,9 @@
 {
-  "config": {
-    "vendor-dir": "libs/vendors/"
-  },
-  "require": {
-    "twig/Twig": "1.*"
-  }
+    "autoload": {
+        "psr-4": { "Linkhub\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "Linkhub\\Tests\\": "tests/" }
+    }
 }
+
