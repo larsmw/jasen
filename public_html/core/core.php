@@ -89,6 +89,7 @@ class Core
 
     foreach($files as $file) {
       if(preg_match("/^.*\.(inc|php)$/i", $file)) {
+          error_log("include file : ". $file);
         include_once(ROOT."/core/classes/".$file);
       }
     }
