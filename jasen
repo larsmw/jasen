@@ -3,6 +3,7 @@
 ini_set('html_errors', 0);
 ini_set('implicit_flush', 1);
 
-include 'libs/cli.php';
+require_once('libs/cli.php');
 
-$c = new Cli();
+
+$c = new libs\Cli();
