@@ -1,7 +1,5 @@
 <?php
 
-namespace Linkhub;
-
 header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 header("Expires: Tue, 13 Jul 1976 16:10:00 GMT"); // Date in the past
 header('Content-type: text/html; charset=utf-8');
