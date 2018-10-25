@@ -48,7 +48,7 @@ function auto_loader($className)
     return false;
 }
 
-spl_autoload_register('App\auto_loader');
+spl_autoload_register('auto_loader');
 
 require_once(ROOT.'/core/classes/Interfaces.php');
 
