@@ -15,16 +15,17 @@ include ROOT."/core/core.php";
 /**
  * Implementation of Application class
  */
-class myApp extends Application {
-
+class MyApp extends Application
+{
     /**
      * Call constructor of parent.
      */
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
 
         // create some routes
-        if(isset($_GET['q'])){
+        if (isset($_GET['q'])){
             $cmd = $_GET['q'];
         }
         else {
@@ -35,21 +36,21 @@ class myApp extends Application {
         // style :
         // $route->add("crawl", array("App\Crawler", "run"));
 
-        if($cmd[0] === "crawl") {
+        if ($cmd[0] === "crawl") {
             $crawler = App\Crawler::getInstance();
             $crawler->run();
             die();
         }
-        if($cmd === "addurl") {
+        if ($cmd === "addurl") {
             $f = new Url('add_url');
             $f->insert($f->get('url'));
         }
-        if($cmd[0] === "pager") {
+        if ($cmd[0] === "pager") {
             $p = new Pager();
             $p->run();
             die();
         }
-        if($cmd === "logout") {
+        if ($cmd === "logout") {
             unset($_COOKIE['myusername']);
             session_start();
             session_unset();
@@ -64,10 +65,11 @@ class myApp extends Application {
      * Renders html and adds to global template
      * @return html
      */
-    private function parse() {
+    private function parse()
+    {
       $template = file_get_contents("templates/index.html");
       
-      if(empty($_COOKIE['myusername'])){
+      if (empty($_COOKIE['myusername'])) {
           $login_form = file_get_contents("templates/login-form.html");
       }
       else {
@@ -80,7 +82,7 @@ class myApp extends Application {
 }
 
 try {
-    $m = new myApp();
+    $m = new MyApp();
 }
 catch (Exception $e) {
     error_log($e);
