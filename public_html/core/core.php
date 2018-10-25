@@ -28,8 +28,8 @@ function linkhub_error_handler(int $errno, string $errstr, string $errfile, int 
     return false;
 }
 
-set_exception_handler('App\linkhub_exception_handler');
-$old_error_handler = set_error_handler('App\linkhub_error_handler');
+set_exception_handler('linkhub_exception_handler');
+$old_error_handler = set_error_handler('linkhub_error_handler');
 
 function auto_loader($className)
 {
