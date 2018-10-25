@@ -7,8 +7,6 @@
 
 namespace Linkhub;
 
-use App,Crawler;
-
 define("ROOT", getcwd());
 include ROOT."/core/core.php";
 
