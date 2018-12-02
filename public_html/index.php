@@ -31,9 +31,6 @@ class MyApp extends Application
         }
         $cmd = explode("/", $cmd);
 
-        // style :
-        // $route->add("crawl", array("App\Crawler", "run"));
-
         if ($cmd[0] === "crawl") {
             $crawler = App\Crawler::getInstance();
             $crawler->run();
