@@ -1,9 +1,6 @@
 {
-    "autoload": {
-        "psr-4": { "Linkhub\\": "src/" }
-    },
-    "autoload-dev": {
-        "psr-4": { "Linkhub\\Tests\\": "tests/" }
+    "require": {
+        "phpunit/phpunit": "6.5.*",
+        "twig/twig": "^2.0"
     }
 }
-
