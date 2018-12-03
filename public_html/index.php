@@ -64,6 +64,7 @@ class MyApp extends Application
      */
     private function parse()
     {
+        // TODO: use twig
       $template = file_get_contents("templates/index.html");
       
       if (empty($_COOKIE['myusername'])) {
