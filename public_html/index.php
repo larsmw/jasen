@@ -7,6 +7,8 @@
 
 namespace Linkhub;
 
+use App\Crawler as Crawler;
+
 define("ROOT", getcwd());
 include ROOT."/core/core.php";
 
@@ -32,7 +34,7 @@ class MyApp extends Application
         $cmd = explode("/", $cmd);
 
         if ($cmd[0] === "crawl") {
-            $crawler = App\Crawler::getInstance();
+            $crawler = Crawler::getInstance();
             $crawler->run();
             die();
         }
