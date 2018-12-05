@@ -16,6 +16,9 @@ class User extends Base implements \interfaces\IWebObject
     // Handle session management for user
     public function run($sender, $args)
     {
+	if (strlen(session_id()) == 0) {
+	  session_start();
+	}
         return null;
     }
 
