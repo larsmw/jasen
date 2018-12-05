@@ -83,6 +83,6 @@ try {
     $m = new MyApp();
 }
 catch (Exception $e) {
-    error_log($e);
+    error_log($e->getMessage());
     echo "Fejlstatus : ERROR (se mere i log-filen)\n";
 }
